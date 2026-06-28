@@ -1,0 +1,53 @@
+name: CodexNotch
+options:
+  bundleIdPrefix: com.mayifan
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  DynamicNotchKit:
+    url: https://github.com/MrKai77/DynamicNotchKit.git
+    revision: cd0b3e52d537db115ad3a9d89601f20e0bee8d27
+targets:
+  CodexNotch:
+    type: application
+    platform: macOS
+    sources:
+      - path: CodexNotch
+        excludes:
+          - Resources/Info.plist
+    dependencies:
+      - package: DynamicNotchKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mayifan.CodexNotch
+        PRODUCT_NAME: CodexNotch
+        INFOPLIST_FILE: CodexNotch/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: 6.0
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        ENABLE_APP_SANDBOX: NO
+        CODE_SIGN_STYLE: Automatic
+  CodexNotchTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: CodexNotchTests
+    dependencies:
+      - target: CodexNotch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mayifan.CodexNotchTests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 6.0
+schemes:
+  CodexNotch:
+    build:
+      targets:
+        CodexNotch: all
+        CodexNotchTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - CodexNotchTests
