@@ -18,11 +18,9 @@
 
 ## 📸 效果预览
 
-| 模式 | 说明 |
-|------|------|
-| **紧凑模式** | 刘海两侧显示 `5h 73%` `7d 45%` |
-| **展开卡片** | 点击后弹出卡片，显示详细进度条和重置时间 |
-| **Antigravity 模式** | 双指右滑切换到 Antigravity，查看多模型配额 |
+| 紧凑模式（刘海两侧） | 展开卡片（Codex 用量） | Antigravity 用量 |
+|---|---|---|
+| ![compact-view](docs/screenshots/compact-view.png) | ![card-view](docs/screenshots/card-view.png) | ![antigravity-view](docs/screenshots/antigravity-view.png) |
 
 ---
 
