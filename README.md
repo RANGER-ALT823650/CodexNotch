@@ -1,57 +1,166 @@
-# Codex Notch
+# Codex Notch — MacBook 刘海用量监控工具
 
-Codex Notch 是一个 macOS 14+ 常驻工具，把 Codex 的 5 小时和每周剩余用量显示在 MacBook 刘海两侧。光标进入刘海区域产生触觉反馈后，点击刘海或两侧用量即可展开卡片；在卡片内用触控板双指左右滑动可切换 Codex 与 Antigravity，点击卡片外收起。
+<img src="https://img.shields.io/badge/macOS-14%2B-brightgreen" alt="macOS 14+"> <img src="https://img.shields.io/badge/Swift-6.0-orange" alt="Swift 6.0">
 
-## 实现
+**Codex Notch** 是一款运行在 MacBook 刘海区域的常驻工具，让你**一眼就能看到** Codex CLI 和 Antigravity 的用量剩余情况，无需打开终端或浏览器。
 
-- 通过本机 `codex app-server --stdio` 的 `account/rateLimits/read` JSON-RPC 获取用量。
-- Antigravity 优先探测已运行应用的本地配额接口；应用未运行时，用伪终端保持 `agy` CLI 存活并读取其 localhost HTTPS 接口。
-- Antigravity 数据层只访问回环接口，不读取或复制本机 OAuth 凭据。
-- 直接依赖 [DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) 提供刘海窗口、动画和无刘海退化逻辑。
-- Codex RPC 进程和 JSONL 处理结构参考了 [CodexBar](https://github.com/steipete/CodexBar)。
-- 每 5 分钟自动刷新，也可从卡片或菜单栏手动刷新。
+---
 
-## 构建
+## ✨ 它能做什么？
 
-需要 Xcode 26、XcodeGen 和已登录的 Codex CLI。
+- **刘海两侧显示用量** — 左侧显示「5 小时」剩余、右侧显示「一周」剩余百分比
+- **点击展开卡片** — 点击刘海或两侧用量数字，展开详细用量卡片
+- **双指滑动切换** — 在卡片上用触控板双指左右滑动，在 Codex 和 Antigravity 用量之间切换
+- **颜色提醒** — 绿色充足、橙色警告、红色不足，一目了然
+- **自动刷新** — 每 5 分钟自动刷新一次，也可手动刷新
+- **菜单栏入口** — 菜单栏中也有小图标，可以展开卡片、刷新、设置开机启动
+- **登录时自启** — 设置后每次开机自动运行
+
+## 📸 效果预览
+
+| 模式 | 说明 |
+|------|------|
+| **紧凑模式** | 刘海两侧显示 `5h 73%` `7d 45%` |
+| **展开卡片** | 点击后弹出卡片，显示详细进度条和重置时间 |
+| **Antigravity 模式** | 双指右滑切换到 Antigravity，查看多模型配额 |
+
+---
+
+## 🛠️ 如何安装和运行？
+
+### 你需要准备
+
+1. **Mac 电脑**，系统 **macOS 14 (Sonoma)** 或更高版本
+2. **Xcode 26** 或更高版本（从 Mac App Store 免费下载）
+3. **Codex CLI** — 已安装并用 ChatGPT 账号登录
+   - 通常安装在 `/opt/homebrew/bin/codex` 或 `/usr/local/bin/codex`
+4. **Antigravity**（可选）— 如果需要查看 Antigravity 用量
+   - 安装 Antigravity 应用或 `agy` CLI 并登录
+5. **XcodeGen**（可选，用于命令行构建）
+
+### 方法一：用 Xcode 直接运行（最简单）
 
 ```bash
+# 1. 用 XcodeGen 生成 .xcodeproj（如果项目中没有）
 xcodegen generate
-xcodebuild -project CodexNotch.xcodeproj -scheme CodexNotch -resolvePackageDependencies
-xcodebuild test -project CodexNotch.xcodeproj -scheme CodexNotch -destination 'platform=macOS'
-xcodebuild build -project CodexNotch.xcodeproj -scheme CodexNotch -configuration Debug -destination 'platform=macOS'
+
+# 2. 用 Xcode 打开项目
+open CodexNotch.xcodeproj
+
+# 3. 在 Xcode 中点击 ▶️ 运行按钮（或按 Cmd+R）
 ```
 
-也可直接用 Xcode 打开 `CodexNotch.xcodeproj` 运行。
-本仓库验证后的本地构建位于 `.build/DerivedData/Build/Products/Debug/CodexNotch.app`。
-
-## 长期运行
-
-这是独立的 macOS App。Xcode 只负责编译和启动；App 启动后，即使关闭 Xcode，已经运行的进程也会继续工作。
-
-不要把长期使用的副本留在 DerivedData 中，因为清理构建缓存会删除它。建议构建 Release 版本后复制到 `~/Applications` 或 `/Applications`，从固定位置启动，然后在菜单栏中开启“登录时启动”：
+### 方法二：命令行构建
 
 ```bash
+# 构建 Debug 版本
+xcodebuild build -project CodexNotch.xcodeproj -scheme CodexNotch -configuration Debug -destination 'platform=macOS'
+
+# 构建 Release 版本（推荐长期使用）
 xcodebuild build -project CodexNotch.xcodeproj -scheme CodexNotch \
   -configuration Release -destination 'platform=macOS' \
   -derivedDataPath .build/DerivedData
 
+# 复制到应用程序目录
 mkdir -p "$HOME/Applications"
-ditto .build/DerivedData/Build/Products/Release/CodexNotch.app \
-  "$HOME/Applications/CodexNotch.app"
+ditto .build/DerivedData/Build/Products/Release/CodexNotch.app "$HOME/Applications/CodexNotch.app"
 open "$HOME/Applications/CodexNotch.app"
 ```
 
-“登录时启动”由 macOS `SMAppService` 管理，适合日常常驻和重启后自动启动。若还要求进程崩溃后自动拉起，需要另外配置带 `KeepAlive` 的 LaunchAgent；这比普通菜单栏 App 更强，但发布版应配合正式签名和独立 helper 使用。
+### 长期使用建议
 
-## 运行条件
+1. 构建 Release 版本后，把 `CodexNotch.app` 复制到 `~/Applications` 或 `/Applications`
+2. 从那里启动 App
+3. 在菜单栏中开启 **"登录时启动"**，以后开机自动运行
 
-- macOS 14 或更高版本。
-- `codex` 位于 `/opt/homebrew/bin/codex`、`/usr/local/bin/codex`、`~/.local/bin/codex` 之一，或通过 `CODEX_PATH` 指定。
-- Codex CLI 已用 ChatGPT 账号登录。
-- Antigravity 配额需要已登录的 Antigravity 应用，或位于常用安装路径且已登录的 `agy`。也可用 `ANTIGRAVITY_PATH` 指定 CLI。
-- 外接无刘海屏幕上 DynamicNotchKit 会使用 floating 样式；紧凑模式则由菜单栏入口替代。
+---
 
-## 归属
+## 🎯 如何使用？
 
-第三方代码及许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+启动后，你会看到：
+
+1. **刘海两侧**出现白色小字显示用量（如 `5h 73%` 和 `7d 45%`）
+2. **鼠标移入刘海区域**有触觉反馈，**点击刘海或数字**展开详细卡片
+3. 在卡片中：
+   - 查看 5 小时和一周的详细进度条和重置时间
+   - 点击 🔄 按钮手动刷新
+   - **双指左右滑动**切换到 Antigravity 用量
+   - 点击卡片外部或 `↑` 按钮收起
+4. **菜单栏图标** `⊞` 点击后：
+   - 查看用量文字摘要
+   - 点击「展开用量卡片」展开卡片
+   - 点击「刷新」手动刷新
+   - 开关「登录时启动」
+   - 开关「仅在 agy/codex 窗口前台时显示」
+
+---
+
+## ⚙️ 技术原理
+
+- **Codex 用量** — 通过本地启动 `codex app-server --stdio` 进程，使用 JSON-RPC 调用 `account/rateLimits/read` 获取
+- **Antigravity 用量** — 优先探测已运行的 Antigravity 应用的本地 HTTPS 接口；如果应用未运行，自动启动 `agy` CLI 获取
+- **刘海窗口** — 基于 [DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) 实现，无刘海屏自动降级为浮动样式
+- **自动刷新** — 每 5 分钟轮询一次
+
+---
+
+## 📁 项目结构
+
+```
+CodexNotch/
+├── App/                    # 应用入口和主逻辑
+│   ├── CodexNotchApp.swift # @main 入口，菜单栏
+│   ├── AppRuntime.swift    # 全局共享状态
+│   └── NotchController.swift # 刘海窗口控制
+├── Models/                 # 数据模型
+│   ├── UsageSnapshot.swift
+│   └── AntigravityUsageSnapshot.swift
+├── Services/               # 数据获取服务
+│   ├── CodexUsageProviding.swift
+│   ├── CodexAppServerUsageProvider.swift
+│   ├── AntigravityUsageProviding.swift
+│   ├── AntigravityLocalUsageProvider.swift
+│   └── AntigravityQuotaParser.swift
+├── State/                  # 状态管理（Observable）
+│   ├── UsageStore.swift
+│   └── AntigravityUsageStore.swift
+├── UI/                     # 界面组件
+│   ├── UsageCompactView.swift
+│   ├── UsageCardView.swift
+│   ├── UsageProgressView.swift
+│   ├── AntigravityUsageView.swift
+│   └── HorizontalSwipeDetector.swift
+└── Resources/
+    └── Info.plist
+```
+
+---
+
+## 🔧 环境变量（可选）
+
+| 变量 | 作用 |
+|------|------|
+| `CODEX_PATH` | 指定 Codex CLI 可执行文件路径 |
+| `ANTIGRAVITY_PATH` | 指定 agy CLI 可执行文件路径 |
+
+---
+
+## 📄 许可证
+
+本项目包含第三方代码，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+- [DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) — MIT License
+- [CodexBar](https://github.com/steipete/CodexBar) — MIT License（参考了 RPC 进程和 JSONL 处理结构）
+
+---
+
+## 🙋 常见问题
+
+**Q: 外接显示器也能用吗？**  
+A: 可以。无刘海屏幕上会使用浮动样式显示；紧凑模式下则由菜单栏入口替代。
+
+**Q: 用量数据安全吗？**  
+A: Antigravity 数据只访问本地回环接口（127.0.0.1），不会读取或复制 OAuth 凭据。
+
+**Q: 为什么看不到用量？**  
+A: 请确保 Codex CLI 或 Antigravity 已登录并正常运行。
