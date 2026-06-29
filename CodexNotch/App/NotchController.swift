@@ -110,14 +110,21 @@ final class NotchController {
 
         let screen = targetScreen
         let isFullScreen = isFrontmostAppFullScreen(on: screen)
+        let isMatchedApp = checkForegroundAppMatches()
 
         let shouldShow: Bool
-        if AppRuntime.shared.onlyShowOnForeground {
-            // If the option is ON, we show it if the foreground app matches, even if it is full screen.
-            shouldShow = checkForegroundAppMatches()
+        if isFullScreen {
+            // In full screen, we ONLY show the notch if the active app is agy or codex, regardless of the setting.
+            shouldShow = isMatchedApp
         } else {
-            // If the option is OFF, we show it unless we are in full screen mode.
-            shouldShow = !isFullScreen
+            // Not in full screen:
+            if AppRuntime.shared.onlyShowOnForeground {
+                // Option is ON: show only if the active app matches
+                shouldShow = isMatchedApp
+            } else {
+                // Option is OFF: always show
+                shouldShow = true
+            }
         }
 
         if shouldShow {
