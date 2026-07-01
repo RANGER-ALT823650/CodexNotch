@@ -5,6 +5,7 @@ import ServiceManagement
 enum UsageProvider: String, CaseIterable, Identifiable, Sendable {
     case codex = "Codex"
     case antigravity = "Antigravity"
+    case allAgents = "所有智能体"
 
     var id: Self { self }
 }
@@ -16,6 +17,7 @@ final class AppRuntime {
 
     let usageStore: UsageStore
     let antigravityStore: AntigravityUsageStore
+    let agentUsageStore: AgentUsageStore
     var activeProvider: UsageProvider = .codex
     private var notchController: NotchController?
     private(set) var launchAtLoginEnabled = SMAppService.mainApp.status == .enabled
@@ -31,12 +33,17 @@ final class AppRuntime {
     private init() {
         usageStore = UsageStore(provider: CodexAppServerUsageProvider())
         antigravityStore = AntigravityUsageStore(provider: AntigravityLocalUsageProvider())
+        agentUsageStore = AgentUsageStore(provider: AgentTokenTrackerUsageProvider())
     }
 
     func start() {
         guard notchController == nil else { return }
         NSApp.setActivationPolicy(.accessory)
-        let controller = NotchController(codexStore: usageStore, antigravityStore: antigravityStore)
+        let controller = NotchController(
+            codexStore: usageStore,
+            antigravityStore: antigravityStore,
+            agentUsageStore: agentUsageStore
+        )
         notchController = controller
         controller.showCompact()
         usageStore.startAutomaticRefresh()

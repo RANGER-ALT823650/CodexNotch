@@ -10,7 +10,8 @@
 
 - **刘海两侧显示用量** — 左侧显示「5 小时」剩余、右侧显示「一周」剩余百分比
 - **点击展开卡片** — 点击刘海或两侧用量数字，展开详细用量卡片
-- **双指滑动切换** — 在卡片上用触控板双指左右滑动，在 Codex 和 Antigravity 用量之间切换
+- **双指滑动切换** — 在 Codex、Antigravity 和所有智能体 Token 热力图之间切换
+- **365 天活动热力图** — 以 GitHub 贡献图的方式展示本机所有支持智能体的 Token 用量
 - **颜色提醒** — 绿色充足、橙色警告、红色不足，一目了然
 - **自动刷新** — 每 5 分钟自动刷新一次，也可手动刷新
 - **菜单栏入口** — 菜单栏中也有小图标，可以展开卡片、刷新、设置开机启动
@@ -34,7 +35,8 @@
    - 通常安装在 `/opt/homebrew/bin/codex` 或 `/usr/local/bin/codex`
 4. **Antigravity**（可选）— 如果需要查看 Antigravity 用量
    - 安装 Antigravity 应用或 `agy` CLI 并登录
-5. **XcodeGen**（可选，用于命令行构建）
+5. **Node.js 20+** — 用于一次性运行 TokenTracker 采集器
+6. **XcodeGen**（可选，用于命令行构建）
 
 ### 方法一：用 Xcode 直接运行（最简单）
 
@@ -83,6 +85,7 @@ open "$HOME/Applications/CodexNotch.app"
    - 查看 5 小时和一周的详细进度条和重置时间
    - 点击 🔄 按钮手动刷新
    - **双指左右滑动**切换到 Antigravity 用量
+   - 继续滑动可查看所有智能体过去 365 天的 Token 热力图
    - 点击卡片外部或 `↑` 按钮收起
 4. **菜单栏图标** `⊞` 点击后：
    - 查看用量文字摘要
@@ -97,6 +100,8 @@ open "$HOME/Applications/CodexNotch.app"
 
 - **Codex 用量** — 通过本地启动 `codex app-server --stdio` 进程，使用 JSON-RPC 调用 `account/rateLimits/read` 获取
 - **Antigravity 用量** — 优先探测已运行的 Antigravity 应用的本地 HTTPS 接口；如果应用未运行，自动启动 `agy` CLI 获取
+- **所有智能体 Token** — 调用固定版本的 TokenTracker 执行一次 `sync --auto`，然后原生读取 `~/.tokentracker/tracker/queue.jsonl`
+- **内存策略** — 仅在切换到热力图或手动刷新时采集；不启动 TokenTracker Dashboard、菜单栏 App、WKWebView 或常驻服务
 - **刘海窗口** — 基于 [DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) 实现，无刘海屏自动降级为浮动样式
 - **自动刷新** — 每 5 分钟轮询一次
 
@@ -140,6 +145,7 @@ CodexNotch/
 |------|------|
 | `CODEX_PATH` | 指定 Codex CLI 可执行文件路径 |
 | `ANTIGRAVITY_PATH` | 指定 agy CLI 可执行文件路径 |
+| `TOKENTRACKER_PATH` | 指定 TokenTracker CLI；未设置时优先查找已安装命令，再回退到固定版本的 `npx` |
 
 ---
 
@@ -149,6 +155,7 @@ CodexNotch/
 
 - [DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) — MIT License
 - [CodexBar](https://github.com/steipete/CodexBar) — MIT License（参考了 RPC 进程和 JSONL 处理结构）
+- [TokenTracker](https://github.com/mm7894215/TokenTracker) — MIT License（仅使用一次性本地采集器，固定为 0.64.2）
 
 ---
 

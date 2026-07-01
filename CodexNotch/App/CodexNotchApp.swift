@@ -45,6 +45,12 @@ private struct MenuBarContent: View {
             Divider()
         }
 
+        if let snapshot = runtime.agentUsageStore.snapshot {
+            Text("所有智能体：\(snapshot.totalTokens.formatted(.number.notation(.compactName))) tokens")
+            Text("过去一年 \(snapshot.activeDays) 个活跃日")
+            Divider()
+        }
+
         Button("展开用量卡片") {
             runtime.showCard()
         }
@@ -53,10 +59,15 @@ private struct MenuBarContent: View {
             Task {
                 async let codex: Void = runtime.usageStore.refresh()
                 async let antigravity: Void = runtime.antigravityStore.refresh()
-                _ = await (codex, antigravity)
+                async let agents: Void = runtime.agentUsageStore.refresh()
+                _ = await (codex, antigravity, agents)
             }
         }
-        .disabled(runtime.usageStore.isRefreshing || runtime.antigravityStore.isRefreshing)
+        .disabled(
+            runtime.usageStore.isRefreshing
+                || runtime.antigravityStore.isRefreshing
+                || runtime.agentUsageStore.isRefreshing
+        )
 
         Toggle("登录时启动", isOn: Binding(
             get: { runtime.launchAtLoginEnabled },
@@ -70,6 +81,7 @@ private struct MenuBarContent: View {
 
         if let error = runtime.usageStore.errorMessage
             ?? runtime.antigravityStore.errorMessage
+            ?? runtime.agentUsageStore.errorMessage
             ?? runtime.launchAtLoginError
         {
             Text(error)

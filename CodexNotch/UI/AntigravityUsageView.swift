@@ -6,13 +6,13 @@ struct AntigravityUsageView: View {
     var body: some View {
         Group {
             if let snapshot = store.snapshot {
-                HStack(spacing: 10) {
+                HStack(spacing: 12) {
                     ForEach(snapshot.groups) { group in
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(group.title)
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.secondary)
-                            HStack(spacing: 6) {
+                            HStack(spacing: 8) {
                                 ForEach(group.buckets) { bucket in
                                     quota(bucket)
                                 }
@@ -41,27 +41,27 @@ struct AntigravityUsageView: View {
     }
 
     private func quota(_ bucket: AntigravityQuotaBucket) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
                 Text(bucket.title)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                 Spacer(minLength: 4)
                 Text(remainingText(bucket))
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
                     .monospacedDigit()
             }
 
             ProgressView(value: bucket.remainingPercent ?? 0, total: 100)
                 .tint(progressColor(bucket.remainingPercent))
                 .opacity(bucket.usageKnown ? 1 : 0.35)
-                .controlSize(.mini)
+                .controlSize(.small)
 
             Text(resetText(bucket))
-                .font(.system(size: 8))
+                .font(.system(size: 9))
                 .foregroundStyle(.tertiary)
                 .lineLimit(1)
         }
-        .padding(6)
+        .padding(8)
         .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 8))
         .frame(maxWidth: .infinity)
     }
@@ -74,7 +74,7 @@ struct AntigravityUsageView: View {
     private func resetText(_ bucket: AntigravityQuotaBucket) -> String {
         if bucket.disabled { return "已停用" }
         if let date = bucket.resetsAt {
-            return "重置 \(date.formatted(date: .abbreviated, time: .shortened))"
+            return "重置 \(date.formatted(.dateTime.month(.abbreviated).day().hour().minute()))"
         }
         return bucket.resetDescription ?? "重置时间未知"
     }

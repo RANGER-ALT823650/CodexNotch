@@ -4,13 +4,13 @@ struct UsageProgressView: View {
     let window: UsageWindow
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Text(window.title)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 Text("\(Int(window.remainingPercent.rounded()))%")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 19, weight: .bold, design: .rounded))
                     .monospacedDigit()
             }
 
@@ -22,14 +22,14 @@ struct UsageProgressView: View {
                         .frame(width: proxy.size.width * window.remainingFraction)
                 }
             }
-            .frame(height: 6)
+            .frame(height: 8)
 
             HStack {
                 Text("剩余用量")
                 Spacer()
                 Text(resetDescription)
             }
-            .font(.system(size: 9, weight: .medium))
+            .font(.system(size: 10, weight: .medium))
             .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .ignore)

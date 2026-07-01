@@ -37,6 +37,7 @@ enum NotchInteractionGeometry {
 final class NotchController {
     private let codexStore: UsageStore
     private let antigravityStore: AntigravityUsageStore
+    private let agentUsageStore: AgentUsageStore
     private var outsideLocalMonitor: Any?
     private var outsideGlobalMonitor: Any?
     private var compactLocalMonitor: Any?
@@ -45,13 +46,26 @@ final class NotchController {
     private var isCompactVisible = false
     private var observerTimer: Timer?
     private var workspaceNotificationObserver: Any?
+    private let agentDayDetailPanel = AgentUsageDayDetailPanelController()
 
     private lazy var notch = DynamicNotch(
         hoverBehavior: .all,
         style: .auto,
-        expanded: { [codexStore, antigravityStore] in
-            UsageCardView(codexStore: codexStore, antigravityStore: antigravityStore) {
-                [weak self] in self?.compact()
+        expanded: { [weak self, codexStore, antigravityStore, agentUsageStore] in
+            let safeAreaTop = self?.targetScreen.safeAreaInsets.top ?? 0
+            return UsageCardView(
+                codexStore: codexStore,
+                antigravityStore: antigravityStore,
+                agentUsageStore: agentUsageStore,
+                safeAreaTop: safeAreaTop,
+                onAgentDaySelected: { [weak self] day, cursor in
+                    self?.showAgentDayDetail(day, cursor: cursor)
+                },
+                onAgentDetailDismiss: { [weak self] in
+                    self?.agentDayDetailPanel.hide()
+                }
+            ) {
+                self?.compact()
             }
         },
         compactLeading: {
@@ -66,9 +80,14 @@ final class NotchController {
         }
     )
 
-    init(codexStore: UsageStore, antigravityStore: AntigravityUsageStore) {
+    init(
+        codexStore: UsageStore,
+        antigravityStore: AntigravityUsageStore,
+        agentUsageStore: AgentUsageStore
+    ) {
         self.codexStore = codexStore
         self.antigravityStore = antigravityStore
+        self.agentUsageStore = agentUsageStore
         startForegroundObserver()
     }
 
@@ -91,6 +110,7 @@ final class NotchController {
 
     func compact() {
         guard isExpanded else { return }
+        agentDayDetailPanel.hide()
         isExpanded = false
         isCompactVisible = true
         removeOutsideClickMonitors()
@@ -98,6 +118,7 @@ final class NotchController {
     }
 
     func stop() {
+        agentDayDetailPanel.hide()
         isExpanded = false
         removeOutsideClickMonitors()
         removeCompactClickMonitors()
@@ -306,6 +327,19 @@ final class NotchController {
     private func collapseIfOutside(_ point: NSPoint) {
         guard isExpanded, !expandedInteractionFrame.contains(point) else { return }
         compact()
+    }
+
+    private func showAgentDayDetail(_ day: AgentUsageDay, cursor: NSPoint) {
+        guard isExpanded else { return }
+        let screen = notch.windowController?.window?.screen ?? targetScreen
+        let expandedBottom = screen.frame.maxY
+            - screen.safeAreaInsets.top
+            - UsageCardView.contentSize.height
+            - 15
+        agentDayDetailPanel.show(
+            day: day,
+            topLeft: NSPoint(x: cursor.x, y: expandedBottom)
+        )
     }
 
     private func installCompactClickMonitors() {

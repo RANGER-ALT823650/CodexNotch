@@ -354,28 +354,28 @@ final class ManagedCLIProcessRegistry: @unchecked Sendable {
     static let shared = ManagedCLIProcessRegistry()
 
     private let lock = NSLock()
-    private var pid: pid_t?
+    private var processIDs: Set<pid_t> = []
 
     private init() {}
 
     func register(pid: pid_t) {
         lock.lock()
-        self.pid = pid
+        processIDs.insert(pid)
         lock.unlock()
     }
 
     func clear(pid: pid_t) {
         lock.lock()
-        if self.pid == pid { self.pid = nil }
+        processIDs.remove(pid)
         lock.unlock()
     }
 
     func terminate() {
         lock.lock()
-        let processID = pid
-        pid = nil
+        let processIDs = self.processIDs
+        self.processIDs.removeAll()
         lock.unlock()
-        if let processID {
+        for processID in processIDs {
             Darwin.kill(processID, SIGTERM)
         }
     }
