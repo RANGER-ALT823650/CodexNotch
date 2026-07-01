@@ -8,12 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		0629C8A3B3E8513E049C1E0A /* UsageCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0A43E3B050860A8BAA6F42 /* UsageCardView.swift */; };
+		0B54C9B8BF309A965FF44C8A /* AgentUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6ABF61F74BD34752DC805E3 /* AgentUsageStore.swift */; };
+		1573304A7CE475A997CD114C /* AgentUsageSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1E225A9C3D1AA5922752FF /* AgentUsageSnapshot.swift */; };
 		18B594D40144DEBB08162B0F /* UsageSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F945BA641FA97B2D8B4DE0E0 /* UsageSnapshotTests.swift */; };
 		2398BE1FDC71A3A9EB112D10 /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = 6EA44D63100089CF191F44FC /* DynamicNotchKit */; };
 		2BF7DE1B2F9EF296098ECFA1 /* AntigravityUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D70C0AC9F0894492FEA750E /* AntigravityUsageView.swift */; };
 		351CF4EB054D059C988B1260 /* NotchInteractionGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E23E180346ED505CA852A8B1 /* NotchInteractionGeometryTests.swift */; };
 		4C2B6D12E3B5B8FFDCDC6960 /* CodexNotchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCFAAA7DE700FC2FD878854F /* CodexNotchApp.swift */; };
 		56F37E515193FD484DFA6FA5 /* UsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CF5715083BA4FB7E5E2B1D /* UsageStore.swift */; };
+		57EEDB8EAD3EFFA91D0A0E72 /* AgentUsageHeatmapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FEBCA681756657DB509770 /* AgentUsageHeatmapView.swift */; };
 		662A5667DB8629DEA71598ED /* CodexUsageProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BA637A9B7C7775607D05E45 /* CodexUsageProviding.swift */; };
 		6B23BDEFBAF7029E48160A92 /* HorizontalSwipeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 617A9B78D5B0207E9CF30D40 /* HorizontalSwipeDetector.swift */; };
 		71E9FE759FD03153F0A7779A /* AntigravityUsageSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE79C3A8E95DE1C177893037 /* AntigravityUsageSnapshot.swift */; };
@@ -21,14 +24,17 @@
 		81D608185A3D351E4901D527 /* AntigravityQuotaParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE2B4A69608B7DEFBEB3E8C /* AntigravityQuotaParser.swift */; };
 		90D6A3068FC8C1FFBB4E8E81 /* AntigravityUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31FBE1E074EF56CA43DDD83 /* AntigravityUsageStore.swift */; };
 		94383AD8C55D56A70A4C311C /* AppRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE678AD656A9D5519C63056 /* AppRuntime.swift */; };
+		A77EA45522C741F160B6DCBA /* AgentUsageProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7DD9F767D940E0B356DAD54 /* AgentUsageProviding.swift */; };
 		B275B79859E328700BD2D0AE /* HorizontalSwipeAccumulatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DF33D7BC0A9522F7B2C68E0 /* HorizontalSwipeAccumulatorTests.swift */; };
 		BDC0BBB20AA4772C93A2A381 /* AntigravityUsageProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8578FF46C5D67B339B7A35F /* AntigravityUsageProviding.swift */; };
 		C44473D051A10F310924CF93 /* UsageSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A87ABBA2EA0CDC8C1860DE /* UsageSnapshot.swift */; };
 		D5DD7B85DBF144FD5FB7FE96 /* AntigravityUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C76ED499F051A4F2EBE4C814 /* AntigravityUsageTests.swift */; };
 		D7FA41ADC74CB7562DBECE6C /* CodexAppServerUsageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A20EB8DCC8F3C93FA66FA4 /* CodexAppServerUsageProvider.swift */; };
 		DBB3AD4481576CD3A7635401 /* UsageProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A162D015AA2D1547FEB1D6 /* UsageProgressView.swift */; };
+		E553C7B5EF7482A5A998E67D /* AgentUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B050B059BF4EE74196DDF0B /* AgentUsageTests.swift */; };
 		EFA2E326FD06D7C1D3E71E7E /* CodexAppServerProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107D1C9D1A85F0A71D28EC7E /* CodexAppServerProtocolTests.swift */; };
 		F00DF35BDA5B2F9D3EE79CD3 /* AntigravityLocalUsageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A7DF7C5B07320F578670CC /* AntigravityLocalUsageProvider.swift */; };
+		F1AAF06FA13F689ADE6FC7EF /* AgentTokenTrackerUsageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C92EE271E9B888D51C05070 /* AgentTokenTrackerUsageProvider.swift */; };
 		FFA29DDA6A3CEEBFEBC66964 /* NotchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B7F1414B421E5CC64128C59 /* NotchController.swift */; };
 /* End PBXBuildFile section */
 
@@ -44,17 +50,22 @@
 
 /* Begin PBXFileReference section */
 		03CF5715083BA4FB7E5E2B1D /* UsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageStore.swift; sourceTree = "<group>"; };
+		0A1E225A9C3D1AA5922752FF /* AgentUsageSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUsageSnapshot.swift; sourceTree = "<group>"; };
 		0BA637A9B7C7775607D05E45 /* CodexUsageProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageProviding.swift; sourceTree = "<group>"; };
 		107D1C9D1A85F0A71D28EC7E /* CodexAppServerProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAppServerProtocolTests.swift; sourceTree = "<group>"; };
 		234517A7E80D1003383C6082 /* CodexNotch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CodexNotch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B7F1414B421E5CC64128C59 /* NotchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchController.swift; sourceTree = "<group>"; };
 		39A162D015AA2D1547FEB1D6 /* UsageProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageProgressView.swift; sourceTree = "<group>"; };
+		3C92EE271E9B888D51C05070 /* AgentTokenTrackerUsageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTokenTrackerUsageProvider.swift; sourceTree = "<group>"; };
 		3DF33D7BC0A9522F7B2C68E0 /* HorizontalSwipeAccumulatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalSwipeAccumulatorTests.swift; sourceTree = "<group>"; };
 		4E0A43E3B050860A8BAA6F42 /* UsageCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageCardView.swift; sourceTree = "<group>"; };
 		617A9B78D5B0207E9CF30D40 /* HorizontalSwipeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalSwipeDetector.swift; sourceTree = "<group>"; };
 		77158ECB500379EC3D1D0668 /* CodexNotchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CodexNotchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B050B059BF4EE74196DDF0B /* AgentUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUsageTests.swift; sourceTree = "<group>"; };
 		9D70C0AC9F0894492FEA750E /* AntigravityUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityUsageView.swift; sourceTree = "<group>"; };
 		A3A87ABBA2EA0CDC8C1860DE /* UsageSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageSnapshot.swift; sourceTree = "<group>"; };
+		A5FEBCA681756657DB509770 /* AgentUsageHeatmapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUsageHeatmapView.swift; sourceTree = "<group>"; };
+		A6ABF61F74BD34752DC805E3 /* AgentUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUsageStore.swift; sourceTree = "<group>"; };
 		A948D515EDE8DE630B3FFB36 /* UsageCompactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageCompactView.swift; sourceTree = "<group>"; };
 		B0A7DF7C5B07320F578670CC /* AntigravityLocalUsageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityLocalUsageProvider.swift; sourceTree = "<group>"; };
 		B1A20EB8DCC8F3C93FA66FA4 /* CodexAppServerUsageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAppServerUsageProvider.swift; sourceTree = "<group>"; };
@@ -64,6 +75,7 @@
 		DBE2B4A69608B7DEFBEB3E8C /* AntigravityQuotaParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityQuotaParser.swift; sourceTree = "<group>"; };
 		DCFAAA7DE700FC2FD878854F /* CodexNotchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexNotchApp.swift; sourceTree = "<group>"; };
 		E23E180346ED505CA852A8B1 /* NotchInteractionGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchInteractionGeometryTests.swift; sourceTree = "<group>"; };
+		E7DD9F767D940E0B356DAD54 /* AgentUsageProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUsageProviding.swift; sourceTree = "<group>"; };
 		EE79C3A8E95DE1C177893037 /* AntigravityUsageSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityUsageSnapshot.swift; sourceTree = "<group>"; };
 		F31FBE1E074EF56CA43DDD83 /* AntigravityUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityUsageStore.swift; sourceTree = "<group>"; };
 		F945BA641FA97B2D8B4DE0E0 /* UsageSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageSnapshotTests.swift; sourceTree = "<group>"; };
@@ -84,6 +96,8 @@
 		1E93CDAFD551090910CA2D76 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				3C92EE271E9B888D51C05070 /* AgentTokenTrackerUsageProvider.swift */,
+				E7DD9F767D940E0B356DAD54 /* AgentUsageProviding.swift */,
 				B0A7DF7C5B07320F578670CC /* AntigravityLocalUsageProvider.swift */,
 				DBE2B4A69608B7DEFBEB3E8C /* AntigravityQuotaParser.swift */,
 				C8578FF46C5D67B339B7A35F /* AntigravityUsageProviding.swift */,
@@ -105,6 +119,7 @@
 		4B9F569AB9D3AF415DF04434 /* CodexNotchTests */ = {
 			isa = PBXGroup;
 			children = (
+				8B050B059BF4EE74196DDF0B /* AgentUsageTests.swift */,
 				C76ED499F051A4F2EBE4C814 /* AntigravityUsageTests.swift */,
 				107D1C9D1A85F0A71D28EC7E /* CodexAppServerProtocolTests.swift */,
 				3DF33D7BC0A9522F7B2C68E0 /* HorizontalSwipeAccumulatorTests.swift */,
@@ -117,6 +132,7 @@
 		532B5E159644CE4B816ECFCD /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				A5FEBCA681756657DB509770 /* AgentUsageHeatmapView.swift */,
 				9D70C0AC9F0894492FEA750E /* AntigravityUsageView.swift */,
 				617A9B78D5B0207E9CF30D40 /* HorizontalSwipeDetector.swift */,
 				4E0A43E3B050860A8BAA6F42 /* UsageCardView.swift */,
@@ -129,6 +145,7 @@
 		7022E89DA2384DCB3290C1AB /* State */ = {
 			isa = PBXGroup;
 			children = (
+				A6ABF61F74BD34752DC805E3 /* AgentUsageStore.swift */,
 				F31FBE1E074EF56CA43DDD83 /* AntigravityUsageStore.swift */,
 				03CF5715083BA4FB7E5E2B1D /* UsageStore.swift */,
 			);
@@ -169,6 +186,7 @@
 		DE1C60DC24887FBCE173F7B2 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				0A1E225A9C3D1AA5922752FF /* AgentUsageSnapshot.swift */,
 				EE79C3A8E95DE1C177893037 /* AntigravityUsageSnapshot.swift */,
 				A3A87ABBA2EA0CDC8C1860DE /* UsageSnapshot.swift */,
 			);
@@ -257,6 +275,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1AAF06FA13F689ADE6FC7EF /* AgentTokenTrackerUsageProvider.swift in Sources */,
+				57EEDB8EAD3EFFA91D0A0E72 /* AgentUsageHeatmapView.swift in Sources */,
+				A77EA45522C741F160B6DCBA /* AgentUsageProviding.swift in Sources */,
+				1573304A7CE475A997CD114C /* AgentUsageSnapshot.swift in Sources */,
+				0B54C9B8BF309A965FF44C8A /* AgentUsageStore.swift in Sources */,
 				F00DF35BDA5B2F9D3EE79CD3 /* AntigravityLocalUsageProvider.swift in Sources */,
 				81D608185A3D351E4901D527 /* AntigravityQuotaParser.swift in Sources */,
 				BDC0BBB20AA4772C93A2A381 /* AntigravityUsageProviding.swift in Sources */,
@@ -281,6 +304,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E553C7B5EF7482A5A998E67D /* AgentUsageTests.swift in Sources */,
 				D5DD7B85DBF144FD5FB7FE96 /* AntigravityUsageTests.swift in Sources */,
 				EFA2E326FD06D7C1D3E71E7E /* CodexAppServerProtocolTests.swift in Sources */,
 				B275B79859E328700BD2D0AE /* HorizontalSwipeAccumulatorTests.swift in Sources */,

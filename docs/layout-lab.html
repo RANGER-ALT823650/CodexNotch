@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CodexNotch 展开卡片布局实验台</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --card-width: 440px;
+      --content-height: 108px;
+      --header-height: 32px;
+      --pad-x: 0px;
+      --pad-top: 0px;
+      --pad-bottom: 0px;
+      --codex-gap: 20px;
+      --anti-group-gap: 12px;
+      --anti-title-gap: 3px;
+      --anti-card-gap: 8px;
+      --anti-card-pad: 8px;
+      --heat-cell: 6.1px;
+      --heat-col-gap: 1.2px;
+      --heat-row-gap: 2px;
+      --accent: #36d465;
+      --line: rgba(125, 211, 252, .72);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #f5f5f7;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(45, 77, 123, .42), transparent 34rem),
+        #0c0d10;
+    }
+
+    .app { display: grid; grid-template-columns: minmax(620px, 1fr) 330px; min-height: 100vh; }
+    .stage { padding: 32px 40px 52px; overflow: auto; }
+    .eyebrow { margin: 0 0 7px; color: #8a8f99; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 24px; letter-spacing: -.03em; }
+    .intro { max-width: 720px; margin: 8px 0 24px; color: #999fa9; font-size: 13px; line-height: 1.55; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 28px; }
+    .tab {
+      border: 1px solid #2b2e34; border-radius: 9px; padding: 7px 12px;
+      color: #a9adb5; background: #16181c; font: inherit; font-size: 12px; cursor: pointer;
+    }
+    .tab.active { color: white; border-color: #49505a; background: #272a30; box-shadow: inset 0 1px rgba(255,255,255,.05); }
+
+    .preview-zone {
+      position: relative; min-width: 560px; min-height: 380px; display: grid; place-items: start center;
+      padding-top: 66px; border: 1px solid #22262c; border-radius: 18px;
+      background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .assembly { position: relative; width: var(--card-width); }
+    .notch {
+      position: absolute; z-index: 3; left: 50%; top: calc(-1 * var(--header-height));
+      width: 182px; height: var(--header-height); transform: translateX(-50%);
+      border-radius: 0 0 14px 14px; background: #000;
+    }
+    .header {
+      position: absolute; z-index: 4; left: 0; top: calc(-1 * var(--header-height));
+      width: var(--card-width); height: var(--header-height); padding: 0 8px;
+      display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
+    }
+    .header .left, .header .actions { display: flex; align-items: center; }
+    .header .left { gap: 6px; }
+    .header .actions { margin-left: auto; gap: 12px; font-weight: 400; }
+    .header .updated { margin-right: 4px; color: #5f6268; font-size: 10px; }
+    .icon { color: var(--accent); font-size: 12px; }
+    .icon-button { width: 14px; color: #e8e8ea; text-align: center; }
+
+    .card {
+      position: relative; width: var(--card-width); height: var(--content-height); overflow: hidden;
+      border-radius: 0 0 18px 18px; background: #000; box-shadow: 0 22px 45px rgba(0,0,0,.42);
+    }
+    .content {
+      position: absolute; inset: var(--pad-top) var(--pad-x) var(--pad-bottom);
+      display: flex; min-width: 0; min-height: 0;
+    }
+    .page { display: none; width: 100%; min-width: 0; }
+    .page.active { display: flex; }
+
+    .codex { align-items: stretch; gap: var(--codex-gap); }
+    .usage { flex: 1 1 0; display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 0; }
+    .usage-head, .usage-foot { display: flex; justify-content: space-between; align-items: baseline; }
+    .usage-head { font-size: 13px; font-weight: 600; }
+    .usage-head strong { font-size: 19px; font-variant-numeric: tabular-nums; }
+    .usage-foot { color: #73767d; font-size: 10px; font-weight: 500; }
+    .bar { height: 8px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.14); }
+    .bar > i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+    .divider { flex: 0 0 1px; background: rgba(255,255,255,.12); }
+
+    .anti { align-items: center; gap: var(--anti-group-gap); }
+    .anti-group { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--anti-title-gap); }
+    .anti-group-title { color: #777a81; font-size: 11px; font-weight: 600; }
+    .anti-row { display: flex; gap: var(--anti-card-gap); min-width: 0; }
+    .quota {
+      flex: 1 1 0; min-width: 0; padding: var(--anti-card-pad); border-radius: 8px;
+      display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,.055);
+    }
+    .quota-head { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; white-space: nowrap; }
+    .quota-head span { overflow: hidden; text-overflow: ellipsis; font-size: 11px; font-weight: 500; }
+    .quota-head strong { font-size: 14px; font-variant-numeric: tabular-nums; }
+    .quota .bar { height: 4px; }
+    .reset { overflow: hidden; color: #55585e; font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
+
+    .agents { flex-direction: column; justify-content: center; gap: 3px; }
+    .agents-summary { display: flex; align-items: baseline; gap: 6px; font-size: 11px; }
+    .agents-summary strong { font-size: 12px; }
+    .agents-summary span { color: #777a81; }
+    .agents-summary span:last-child { margin-left: auto; }
+    .months, .heatmap-row { display: flex; gap: 3px; }
+    .months { height: 10px; align-items: end; }
+    .weekday-spacer, .weekdays { flex: 0 0 16px; width: 16px; }
+    .month-grid, .weeks { display: flex; gap: var(--heat-col-gap); min-width: 0; }
+    .month-grid { overflow: hidden; }
+    .month-grid span { flex: 0 0 var(--heat-cell); width: var(--heat-cell); color: #777a81; font-size: 8.5px; white-space: nowrap; }
+    .weekdays, .week { display: grid; grid-template-rows: repeat(7, var(--heat-cell)); row-gap: var(--heat-row-gap); }
+    .weekdays span { height: var(--heat-cell); color: #777a81; font-size: 8.5px; line-height: var(--heat-cell); text-align: right; }
+    .cell { width: var(--heat-cell); height: var(--heat-cell); border-radius: 1.5px; background: rgba(255,255,255,.075); }
+    .cell.l1 { background: #0d592b; }.cell.l2 { background: #1a853d; }.cell.l3 { background: #2eae4f; }.cell.l4 { background: #57d16e; }
+
+    .measure-layer { pointer-events: none; position: absolute; inset: 0; z-index: 8; }
+    .measure { position: absolute; color: #8bd6f6; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .measure::before { content: ""; position: absolute; background: var(--line); }
+    .m-width { left: 0; right: 0; bottom: -23px; text-align: center; }
+    .m-width::before { left: 0; right: 0; top: -5px; height: 1px; box-shadow: 0 -4px var(--line), 0 4px var(--line); }
+    .m-height { right: -42px; top: 0; height: var(--content-height); display: grid; place-items: center; writing-mode: vertical-rl; }
+    .m-height::before { top: 0; bottom: 0; left: -5px; width: 1px; }
+    .m-header { right: -42px; top: calc(-1 * var(--header-height)); height: var(--header-height); display: grid; place-items: center; writing-mode: vertical-rl; }
+    .m-header::before { top: 0; bottom: 0; left: -5px; width: 1px; }
+    .inset-outline { position: absolute; inset: var(--pad-top) var(--pad-x) var(--pad-bottom); border: 1px dashed rgba(125,211,252,.48); border-radius: 4px; }
+    body:not(.show-measures) .measure-layer { display: none; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 42px; color: #8b9099; font-size: 11px; }
+    .legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 2px; vertical-align: 0; }
+    .legend .fixed::before { background: #7dd3fc; }.legend .flex::before { background: #57d16e; }.legend .derived::before { background: #a78bfa; }
+
+    aside { padding: 26px 24px 40px; border-left: 1px solid #24272c; background: rgba(17,18,21,.96); overflow-y: auto; }
+    aside h2 { margin: 0 0 5px; font-size: 15px; }
+    aside > p { margin: 0 0 20px; color: #7f848e; font-size: 11px; line-height: 1.5; }
+    .section { margin: 22px 0; }
+    .section-title { margin-bottom: 10px; color: #b9bdc5; font-size: 11px; font-weight: 650; }
+    .control { display: grid; grid-template-columns: 1fr 56px; gap: 8px 12px; align-items: center; margin: 11px 0; }
+    .control label { color: #9297a1; font-size: 11px; }
+    .control output { justify-self: end; color: #e8e9ec; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: #8b95a5; }
+    .toggle { display: flex; align-items: center; justify-content: space-between; color: #a2a7b0; font-size: 11px; }
+    .toggle input { accent-color: #55ca70; }
+    .readout { padding: 12px; border: 1px solid #2b2e34; border-radius: 9px; color: #9da2ac; background: #121418; font: 10px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+    .reset-button { width: 100%; border: 1px solid #343840; border-radius: 9px; padding: 8px; color: #d5d7db; background: #202329; cursor: pointer; }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      aside { border-left: 0; border-top: 1px solid #24272c; }
+    }
+    @media (max-width: 700px) {
+      .stage { padding: 24px 16px 36px; }
+      .intro { margin-bottom: 18px; }
+      .tabs { gap: 4px; margin-bottom: 20px; }
+      .tab { flex: 1; padding-inline: 7px; }
+      .preview-zone { min-width: 0; min-height: 310px; padding-top: 58px; }
+      .assembly { zoom: .84; }
+      .legend { margin-top: 34px; }
+      aside { padding-inline: 20px; }
+    }
+  </style>
+</head>
+<body class="show-measures">
+  <main class="app">
+    <section class="stage">
+      <p class="eyebrow">SwiftUI constraint mirror</p>
+      <h1>展开卡片布局实验台</h1>
+      <p class="intro">按当前源码的 pt 数值等比映射。蓝色虚线是内容 inset；右侧参数可实时微调，便于确定改回 SwiftUI 的具体数值。</p>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-page="codex">Codex 用量</button>
+        <button class="tab" data-page="anti">Antigravity</button>
+        <button class="tab" data-page="agents">所有智能体 Token</button>
+      </div>
+
+      <div class="preview-zone">
+        <div class="assembly">
+          <div class="notch"></div>
+          <header class="header">
+            <div class="left"><span class="icon">▣</span><span id="providerTitle">Codex 用量</span></div>
+            <div class="actions"><span class="updated">更新于 16:23</span><span class="icon-button">↻</span><span class="icon-button">⌃</span></div>
+          </header>
+          <div class="card">
+            <div class="content">
+              <section class="page codex active" data-content="codex">
+                <div class="usage">
+                  <div class="usage-head"><span>5 小时</span><strong>82%</strong></div><div class="bar"><i style="width:82%"></i></div>
+                  <div class="usage-foot"><span>剩余用量</span><span>3 小时后重置</span></div>
+                </div>
+                <div class="divider"></div>
+                <div class="usage">
+                  <div class="usage-head"><span>一周</span><strong>64%</strong></div><div class="bar"><i style="width:64%"></i></div>
+                  <div class="usage-foot"><span>剩余用量</span><span>周一重置</span></div>
+                </div>
+              </section>
+
+              <section class="page anti" data-content="anti">
+                <div class="anti-group"><div class="anti-group-title">Gemini</div><div class="anti-row">
+                  <div class="quota"><div class="quota-head"><span>5 小时</span><strong>76%</strong></div><div class="bar"><i style="width:76%"></i></div><div class="reset">重置 2026年7月1日</div></div>
+                  <div class="quota"><div class="quota-head"><span>一周</span><strong>88%</strong></div><div class="bar"><i style="width:88%"></i></div><div class="reset">重置 2026年7月6日</div></div>
+                </div></div>
+                <div class="anti-group"><div class="anti-group-title">Claude / GPT</div><div class="anti-row">
+                  <div class="quota"><div class="quota-head"><span>5 小时</span><strong>100%</strong></div><div class="bar"><i style="width:100%"></i></div><div class="reset">重置 2026年7月1日</div></div>
+                  <div class="quota"><div class="quota-head"><span>一周</span><strong>72%</strong></div><div class="bar"><i style="width:72%"></i></div><div class="reset">重置 2026年7月6日</div></div>
+                </div></div>
+              </section>
+
+              <section class="page agents" data-content="agents">
+                <div class="agents-summary"><strong>12.8M tokens</strong><span>· 146 个活跃日</span><span>5 个智能体来源</span></div>
+                <div class="months"><div class="weekday-spacer"></div><div class="month-grid" id="months"></div></div>
+                <div class="heatmap-row"><div class="weekdays"><span>日</span><span>一</span><span></span><span>三</span><span></span><span>五</span><span></span></div><div class="weeks" id="weeks"></div></div>
+              </section>
+            </div>
+          </div>
+          <div class="measure-layer"><div class="inset-outline"></div><span class="measure m-width" id="widthMeasure"></span><span class="measure m-height" id="heightMeasure"></span><span class="measure m-header" id="headerMeasure"></span></div>
+        </div>
+      </div>
+      <div class="legend"><span class="fixed">固定 frame</span><span class="flex">maxWidth / flexible</span><span class="derived">由 safeAreaTop 推导</span></div>
+    </section>
+
+    <aside>
+      <h2>约束参数</h2><p>单位对应 SwiftUI pt；浏览器按 1 pt = 1 px 映射。</p>
+      <div class="toggle"><span>显示测量标注</span><input id="showMeasures" type="checkbox" checked></div>
+      <div id="controls"></div>
+      <div class="section"><div class="section-title">当前建议值</div><div class="readout" id="readout"></div></div>
+      <button class="reset-button" id="reset">恢复源码值</button>
+    </aside>
+  </main>
+
+  <script>
+    const specs = [
+      { group: '全局 · UsageCardView', key: 'cardWidth', css: '--card-width', label: '内容宽度', min: 360, max: 560, step: 1, value: 440 },
+      { group: '全局 · UsageCardView', key: 'contentHeight', css: '--content-height', label: '内容高度', min: 80, max: 180, step: 1, value: 108 },
+      { group: '全局 · UsageCardView', key: 'headerHeight', css: '--header-height', label: '刘海区高度', min: 24, max: 44, step: 1, value: 32 },
+      { group: '全局 · Content inset', key: 'padX', css: '--pad-x', label: '水平 padding（源码已注释）', min: 0, max: 28, step: 1, value: 0 },
+      { group: '全局 · Content inset', key: 'padTop', css: '--pad-top', label: '顶部 padding（源码已注释）', min: 0, max: 24, step: 1, value: 0 },
+      { group: '全局 · Content inset', key: 'padBottom', css: '--pad-bottom', label: '底部 padding（源码已注释）', min: 0, max: 28, step: 1, value: 0 },
+      { group: 'Codex 页面', key: 'codexGap', css: '--codex-gap', label: '两栏间距', min: 4, max: 40, step: 1, value: 20 },
+      { group: 'Antigravity 页面', key: 'antiGroupGap', css: '--anti-group-gap', label: '分组间距', min: 0, max: 28, step: 1, value: 12 },
+      { group: 'Antigravity 页面', key: 'antiTitleGap', css: '--anti-title-gap', label: '标题与小卡片间距', min: 0, max: 16, step: 1, value: 3 },
+      { group: 'Antigravity 页面', key: 'antiCardGap', css: '--anti-card-gap', label: '小卡片间距', min: 0, max: 20, step: 1, value: 8 },
+      { group: 'Antigravity 页面', key: 'antiCardPad', css: '--anti-card-pad', label: '小卡片 padding', min: 2, max: 16, step: 1, value: 8 },
+      { group: '智能体热力图', key: 'heatCell', css: '--heat-cell', label: '方格边长', min: 3.5, max: 8, step: .1, value: 6.1 },
+      { group: '智能体热力图', key: 'heatColGap', css: '--heat-col-gap', label: '列间距', min: 0, max: 4, step: .1, value: 1.2 },
+      { group: '智能体热力图', key: 'heatRowGap', css: '--heat-row-gap', label: '行间距', min: 0, max: 4, step: .1, value: 2 }
+    ];
+    const state = Object.fromEntries(specs.map(s => [s.key, s.value]));
+    const controls = document.querySelector('#controls');
+    let group = '';
+    specs.forEach(spec => {
+      if (spec.group !== group) { group = spec.group; controls.insertAdjacentHTML('beforeend', `<div class="section"><div class="section-title">${group}</div><div data-group="${group}"></div></div>`); }
+      const host = [...controls.querySelectorAll('[data-group]')].at(-1);
+      host.insertAdjacentHTML('beforeend', `<div class="control"><label for="${spec.key}">${spec.label}</label><output id="${spec.key}Out"></output><input id="${spec.key}" type="range" min="${spec.min}" max="${spec.max}" step="${spec.step}" value="${spec.value}"></div>`);
+      document.querySelector(`#${spec.key}`).addEventListener('input', e => { state[spec.key] = Number(e.target.value); render(); });
+    });
+
+    const weeks = document.querySelector('#weeks');
+    const months = document.querySelector('#months');
+    const monthNames = ['7月','','','8月','','','','9月','','','','10月','','','','11月','','','','12月','','','','1月','','','','2月','','','','3月','','','','4月','','','','5月','','','','6月','','','',''];
+    for (let w = 0; w < 53; w++) {
+      const week = document.createElement('div'); week.className = 'week';
+      for (let d = 0; d < 7; d++) { const cell = document.createElement('span'); const n = (w * 11 + d * 7 + w * d) % 17; cell.className = `cell ${n > 13 ? 'l4' : n > 10 ? 'l3' : n > 7 ? 'l2' : n > 4 ? 'l1' : ''}`; week.append(cell); }
+      weeks.append(week); const month = document.createElement('span'); month.textContent = monthNames[w] || ''; months.append(month);
+    }
+
+    function render() {
+      specs.forEach(spec => { document.documentElement.style.setProperty(spec.css, `${state[spec.key]}px`); document.querySelector(`#${spec.key}Out`).value = `${state[spec.key]} pt`; document.querySelector(`#${spec.key}`).value = state[spec.key]; });
+      document.querySelector('#widthMeasure').textContent = `${state.cardWidth} pt`;
+      document.querySelector('#heightMeasure').textContent = `${state.contentHeight} pt`;
+      document.querySelector('#headerMeasure').textContent = `${state.headerHeight} pt`;
+      document.querySelector('#readout').textContent = `UsageCardView.contentSize = CGSize(\n  width: ${state.cardWidth}, height: ${state.contentHeight}\n)\ncontent padding = H ${state.padX} / T ${state.padTop} / B ${state.padBottom}\nCodex HStack spacing = ${state.codexGap}\nAntigravity group/title/card spacing = ${state.antiGroupGap} / ${state.antiTitleGap} / ${state.antiCardGap}\nAntigravity quota padding = ${state.antiCardPad}\nHeatmap cell = ${state.heatCell}\nHeatmap spacing = ${state.heatColGap} / ${state.heatRowGap}`;
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === tab));
+      document.querySelectorAll('.page').forEach(x => x.classList.toggle('active', x.dataset.content === tab.dataset.page));
+      const labels = { codex: ['Codex 用量', '▣'], anti: ['Antigravity 用量', '✦'], agents: ['所有智能体 Token', '▦'] };
+      document.querySelector('#providerTitle').textContent = labels[tab.dataset.page][0]; document.querySelector('.icon').textContent = labels[tab.dataset.page][1];
+    }));
+    document.querySelector('#showMeasures').addEventListener('change', e => document.body.classList.toggle('show-measures', e.target.checked));
+    document.querySelector('#reset').addEventListener('click', () => { specs.forEach(s => state[s.key] = s.value); render(); });
+    render();
+  </script>
+</body>
+</html>
