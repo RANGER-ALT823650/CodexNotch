@@ -13,17 +13,14 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
         let model: String
         let hourStart: String
         let totalTokens: Int64
-        let billableTotalTokens: Int64?
 
         enum CodingKeys: String, CodingKey {
             case source
             case model
             case hourStart = "hour_start"
             case totalTokens = "total_tokens"
-            case billableTotalTokens = "billable_total_tokens"
         }
 
-        var effectiveTokens: Int64 { billableTotalTokens ?? totalTokens }
         var bucketKey: String { "\(source)|\(model)|\(hourStart)" }
     }
 
@@ -123,7 +120,7 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
             else { continue }
             let day = calendar.startOfDay(for: timestamp)
             guard day >= firstDay, day <= today else { continue }
-            totalsByDay[day, default: 0] += max(0, row.effectiveTokens)
+            totalsByDay[day, default: 0] += max(0, row.totalTokens)
             sources.insert(row.source)
         }
 

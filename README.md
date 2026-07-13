@@ -8,13 +8,16 @@
 
 ## ✨ 它能做什么？
 
-- **刘海两侧显示用量** — 左侧显示「5 小时」剩余、右侧显示「一周」剩余百分比
-- **点击展开卡片** — 点击刘海或两侧用量数字，展开详细用量卡片
+- **刘海两侧显示用量** —
+  - **Codex 模式**：左侧显示 `Codex` 标识（Codex 已取消 5 小时限额）、右侧显示「一周」剩余百分比（`7d`）
+  - **Antigravity 模式**：左侧显示「5 小时」剩余（`5h`）、右侧显示「一周」剩余百分比（`7d`）
+- **点击展开卡片** — 点击刘海或两侧用量数字，展开详细用量卡片（Codex 仅显示周限额环，Antigravity 显示 5 小时和周限额环）
 - **双指滑动切换** — 在 Codex、Antigravity 和所有智能体 Token 热力图之间切换
 - **365 天活动热力图** — 以 GitHub 贡献图的方式展示本机所有支持智能体的 Token 用量
 - **每日 Token 详情** — 点击热力图方块，在展开页下方查看当天日期与总用量（例如 `22.1M`）
 - **颜色提醒** — 绿色充足、橙色警告、红色不足，一目了然
 - **自动刷新** — 每 5 分钟自动刷新一次，也可手动刷新
+- **异常重置提醒** — 如果一周用量在正常到期前突然下降，通过 OpenClaw 发送 Telegram 提醒
 - **菜单栏入口** — 菜单栏中也有小图标，可以展开卡片、刷新、设置开机启动
 - **登录时自启** — 设置后每次开机自动运行
 
@@ -38,6 +41,7 @@
    - 安装 Antigravity 应用或 `agy` CLI 并登录
 5. **Node.js 20+** — 用于一次性运行 TokenTracker 采集器
 6. **XcodeGen**（可选，用于命令行构建）
+7. **OpenClaw + Telegram**（可选）— 用于接收 Codex 一周用量的异常重置提醒
 
 ### 方法一：用 Xcode 直接运行（最简单）
 
@@ -80,10 +84,10 @@ open "$HOME/Applications/CodexNotch.app"
 
 启动后，你会看到：
 
-1. **刘海两侧**出现白色小字显示用量（如 `5h 73%` 和 `7d 45%`）
+1. **刘海两侧**出现白色小字显示用量（如 Codex 显示 `Codex` 和 `7d 45%`，Antigravity 显示 `5h 73%` 和 `7d 45%`）
 2. **鼠标移入刘海区域**有触觉反馈，**点击刘海或数字**展开详细卡片
 3. 在卡片中：
-   - 查看 5 小时和一周的详细进度条和重置时间
+   - 查看用量的详细进度条和重置时间（Codex 仅显示周限额环，Antigravity 显示 5 小时和周限额环）
    - 点击 🔄 按钮手动刷新
    - **双指左右滑动**切换到 Antigravity 用量
    - 继续滑动可查看所有智能体过去 365 天的 Token 热力图
@@ -95,6 +99,7 @@ open "$HOME/Applications/CodexNotch.app"
    - 点击「刷新」手动刷新
    - 开关「登录时启动」
    - 开关「仅在 agy/codex 窗口前台时显示」
+   - 如果准备自己在官方页面手动 Reset，先点击「标记接下来的 Reset 为本人操作」，10 分钟内检测到的重置不会发送提醒
 
 ---
 
@@ -106,6 +111,7 @@ open "$HOME/Applications/CodexNotch.app"
 - **内存策略** — 仅在切换到热力图或手动刷新时采集；不启动 TokenTracker Dashboard、菜单栏 App、WKWebView 或常驻服务
 - **刘海窗口** — 基于 [DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) 实现，无刘海屏自动降级为浮动样式
 - **自动刷新** — 每 5 分钟轮询一次
+- **异常重置检测** — 持久化保存上一次的一周用量；只有在原定 7 天到期前，已用量同时满足「下降至少 5 个百分点」、「降幅至少 80%」和「新值不高于 5%」，并在约 10 分钟内的后续两次轮询中仍然接近零，才通过 OpenClaw CLI 向 Telegram 发送一次去重提醒。发送失败会在下次轮询重试
 
 ---
 
@@ -153,6 +159,8 @@ CodexNotch/
 | `CODEX_PATH` | 指定 Codex CLI 可执行文件路径 |
 | `ANTIGRAVITY_PATH` | 指定 agy CLI 可执行文件路径 |
 | `TOKENTRACKER_PATH` | 指定 TokenTracker CLI；未设置时优先查找已安装命令，再回退到固定版本的 `npx` |
+| `OPENCLAW_PATH` | 指定 OpenClaw CLI 可执行文件路径 |
+| `CODEX_NOTCH_TELEGRAM_TARGET` | Telegram chat id 或 `@username`；未设置时使用 `~/.openclaw/openclaw.json` 中的第一个 `channels.telegram.allowFrom` |
 
 ---
 

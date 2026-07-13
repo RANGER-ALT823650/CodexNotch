@@ -28,7 +28,8 @@ struct UsageWindow: Equatable, Sendable {
 }
 
 struct UsageSnapshot: Equatable, Sendable {
-    let primary: UsageWindow
+    // NOTE: Codex 已取消 5 小时限额，primary 改为可选，不再在 UI 中展示。
+    let primary: UsageWindow?
     let secondary: UsageWindow
     let fetchedAt: Date
 }

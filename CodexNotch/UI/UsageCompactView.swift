@@ -77,19 +77,27 @@ struct UsageCompactView: View {
         if activeProvider == .allAgents {
             return kind == .primary ? "Tokens" : "Days"
         }
+        // NOTE: Codex 已取消 5 小时限额，左侧改为 "Codex"；Antigravity 保留 "5h"。
+        // return kind == .primary ? "5h" : "7d"
+        if activeProvider == .codex {
+            return kind == .primary ? "Codex" : "7d"
+        }
         return kind == .primary ? "5h" : "7d"
     }
 
     private var remainingPercent: Double? {
         switch activeProvider {
         case .codex:
-            switch kind {
-            case .primary:
-                return codexStore.snapshot?.primary.remainingPercent
-            case .secondary:
-                return codexStore.snapshot?.secondary.remainingPercent
-            }
+            // NOTE: Codex 已取消 5 小时限额，只返回 secondary（一周）。
+            // switch kind {
+            // case .primary:
+            //     return codexStore.snapshot?.primary.remainingPercent
+            // case .secondary:
+            //     return codexStore.snapshot?.secondary.remainingPercent
+            // }
+            return codexStore.snapshot?.secondary.remainingPercent
         case .antigravity:
+            // Antigravity 仍保留 5 小时限额，正常区分 primary/secondary。
             guard let group = antigravityStore.snapshot?.mostRecentlyUsedGroup else { return nil }
             switch kind {
             case .primary:
