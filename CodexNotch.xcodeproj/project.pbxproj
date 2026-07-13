@@ -8,9 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		0629C8A3B3E8513E049C1E0A /* UsageCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0A43E3B050860A8BAA6F42 /* UsageCardView.swift */; };
+		0A6FC87E7047D4333294F598 /* UnexpectedUsageResetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D86B64E72A4B83F52C2903D /* UnexpectedUsageResetTests.swift */; };
 		0B54C9B8BF309A965FF44C8A /* AgentUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6ABF61F74BD34752DC805E3 /* AgentUsageStore.swift */; };
 		1573304A7CE475A997CD114C /* AgentUsageSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1E225A9C3D1AA5922752FF /* AgentUsageSnapshot.swift */; };
+		175C153DF4128A4BC25BB9DB /* UnexpectedUsageReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5895F21F6A5A05CFB8502A /* UnexpectedUsageReset.swift */; };
 		18B594D40144DEBB08162B0F /* UsageSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F945BA641FA97B2D8B4DE0E0 /* UsageSnapshotTests.swift */; };
+		1BEB8A2CDEE67154F954ACF9 /* UsageResetMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62AB9388A79C77A8167BF157 /* UsageResetMonitor.swift */; };
 		2398BE1FDC71A3A9EB112D10 /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = 6EA44D63100089CF191F44FC /* DynamicNotchKit */; };
 		2BF7DE1B2F9EF296098ECFA1 /* AntigravityUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D70C0AC9F0894492FEA750E /* AntigravityUsageView.swift */; };
 		351CF4EB054D059C988B1260 /* NotchInteractionGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E23E180346ED505CA852A8B1 /* NotchInteractionGeometryTests.swift */; };
@@ -20,12 +23,14 @@
 		662A5667DB8629DEA71598ED /* CodexUsageProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BA637A9B7C7775607D05E45 /* CodexUsageProviding.swift */; };
 		6B23BDEFBAF7029E48160A92 /* HorizontalSwipeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 617A9B78D5B0207E9CF30D40 /* HorizontalSwipeDetector.swift */; };
 		71E9FE759FD03153F0A7779A /* AntigravityUsageSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE79C3A8E95DE1C177893037 /* AntigravityUsageSnapshot.swift */; };
+		754C60D8837490947E8F2614 /* UsageResetNotifying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128E31D028E4943CC19CC773 /* UsageResetNotifying.swift */; };
 		7BA65BFAB5398BB975BBC335 /* UsageCompactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A948D515EDE8DE630B3FFB36 /* UsageCompactView.swift */; };
 		81D608185A3D351E4901D527 /* AntigravityQuotaParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE2B4A69608B7DEFBEB3E8C /* AntigravityQuotaParser.swift */; };
 		90D6A3068FC8C1FFBB4E8E81 /* AntigravityUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31FBE1E074EF56CA43DDD83 /* AntigravityUsageStore.swift */; };
 		94383AD8C55D56A70A4C311C /* AppRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE678AD656A9D5519C63056 /* AppRuntime.swift */; };
 		A77EA45522C741F160B6DCBA /* AgentUsageProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7DD9F767D940E0B356DAD54 /* AgentUsageProviding.swift */; };
 		B275B79859E328700BD2D0AE /* HorizontalSwipeAccumulatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DF33D7BC0A9522F7B2C68E0 /* HorizontalSwipeAccumulatorTests.swift */; };
+		BACAD001999D2990FC4C42C5 /* UsageResetMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20D1C453F23D9286149EA9E /* UsageResetMonitorTests.swift */; };
 		BDC0BBB20AA4772C93A2A381 /* AntigravityUsageProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8578FF46C5D67B339B7A35F /* AntigravityUsageProviding.swift */; };
 		C44473D051A10F310924CF93 /* UsageSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A87ABBA2EA0CDC8C1860DE /* UsageSnapshot.swift */; };
 		D5DD7B85DBF144FD5FB7FE96 /* AntigravityUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C76ED499F051A4F2EBE4C814 /* AntigravityUsageTests.swift */; };
@@ -53,6 +58,8 @@
 		0A1E225A9C3D1AA5922752FF /* AgentUsageSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUsageSnapshot.swift; sourceTree = "<group>"; };
 		0BA637A9B7C7775607D05E45 /* CodexUsageProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageProviding.swift; sourceTree = "<group>"; };
 		107D1C9D1A85F0A71D28EC7E /* CodexAppServerProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAppServerProtocolTests.swift; sourceTree = "<group>"; };
+		128E31D028E4943CC19CC773 /* UsageResetNotifying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageResetNotifying.swift; sourceTree = "<group>"; };
+		1D86B64E72A4B83F52C2903D /* UnexpectedUsageResetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnexpectedUsageResetTests.swift; sourceTree = "<group>"; };
 		234517A7E80D1003383C6082 /* CodexNotch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CodexNotch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B7F1414B421E5CC64128C59 /* NotchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchController.swift; sourceTree = "<group>"; };
 		39A162D015AA2D1547FEB1D6 /* UsageProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageProgressView.swift; sourceTree = "<group>"; };
@@ -60,8 +67,10 @@
 		3DF33D7BC0A9522F7B2C68E0 /* HorizontalSwipeAccumulatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalSwipeAccumulatorTests.swift; sourceTree = "<group>"; };
 		4E0A43E3B050860A8BAA6F42 /* UsageCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageCardView.swift; sourceTree = "<group>"; };
 		617A9B78D5B0207E9CF30D40 /* HorizontalSwipeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalSwipeDetector.swift; sourceTree = "<group>"; };
+		62AB9388A79C77A8167BF157 /* UsageResetMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageResetMonitor.swift; sourceTree = "<group>"; };
 		77158ECB500379EC3D1D0668 /* CodexNotchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CodexNotchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B050B059BF4EE74196DDF0B /* AgentUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUsageTests.swift; sourceTree = "<group>"; };
+		8C5895F21F6A5A05CFB8502A /* UnexpectedUsageReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnexpectedUsageReset.swift; sourceTree = "<group>"; };
 		9D70C0AC9F0894492FEA750E /* AntigravityUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityUsageView.swift; sourceTree = "<group>"; };
 		A3A87ABBA2EA0CDC8C1860DE /* UsageSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageSnapshot.swift; sourceTree = "<group>"; };
 		A5FEBCA681756657DB509770 /* AgentUsageHeatmapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUsageHeatmapView.swift; sourceTree = "<group>"; };
@@ -69,6 +78,7 @@
 		A948D515EDE8DE630B3FFB36 /* UsageCompactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageCompactView.swift; sourceTree = "<group>"; };
 		B0A7DF7C5B07320F578670CC /* AntigravityLocalUsageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityLocalUsageProvider.swift; sourceTree = "<group>"; };
 		B1A20EB8DCC8F3C93FA66FA4 /* CodexAppServerUsageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAppServerUsageProvider.swift; sourceTree = "<group>"; };
+		B20D1C453F23D9286149EA9E /* UsageResetMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageResetMonitorTests.swift; sourceTree = "<group>"; };
 		BCE678AD656A9D5519C63056 /* AppRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntime.swift; sourceTree = "<group>"; };
 		C76ED499F051A4F2EBE4C814 /* AntigravityUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityUsageTests.swift; sourceTree = "<group>"; };
 		C8578FF46C5D67B339B7A35F /* AntigravityUsageProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityUsageProviding.swift; sourceTree = "<group>"; };
@@ -103,6 +113,7 @@
 				C8578FF46C5D67B339B7A35F /* AntigravityUsageProviding.swift */,
 				B1A20EB8DCC8F3C93FA66FA4 /* CodexAppServerUsageProvider.swift */,
 				0BA637A9B7C7775607D05E45 /* CodexUsageProviding.swift */,
+				128E31D028E4943CC19CC773 /* UsageResetNotifying.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -124,6 +135,8 @@
 				107D1C9D1A85F0A71D28EC7E /* CodexAppServerProtocolTests.swift */,
 				3DF33D7BC0A9522F7B2C68E0 /* HorizontalSwipeAccumulatorTests.swift */,
 				E23E180346ED505CA852A8B1 /* NotchInteractionGeometryTests.swift */,
+				1D86B64E72A4B83F52C2903D /* UnexpectedUsageResetTests.swift */,
+				B20D1C453F23D9286149EA9E /* UsageResetMonitorTests.swift */,
 				F945BA641FA97B2D8B4DE0E0 /* UsageSnapshotTests.swift */,
 			);
 			path = CodexNotchTests;
@@ -147,6 +160,7 @@
 			children = (
 				A6ABF61F74BD34752DC805E3 /* AgentUsageStore.swift */,
 				F31FBE1E074EF56CA43DDD83 /* AntigravityUsageStore.swift */,
+				62AB9388A79C77A8167BF157 /* UsageResetMonitor.swift */,
 				03CF5715083BA4FB7E5E2B1D /* UsageStore.swift */,
 			);
 			path = State;
@@ -188,6 +202,7 @@
 			children = (
 				0A1E225A9C3D1AA5922752FF /* AgentUsageSnapshot.swift */,
 				EE79C3A8E95DE1C177893037 /* AntigravityUsageSnapshot.swift */,
+				8C5895F21F6A5A05CFB8502A /* UnexpectedUsageReset.swift */,
 				A3A87ABBA2EA0CDC8C1860DE /* UsageSnapshot.swift */,
 			);
 			path = Models;
@@ -292,9 +307,12 @@
 				662A5667DB8629DEA71598ED /* CodexUsageProviding.swift in Sources */,
 				6B23BDEFBAF7029E48160A92 /* HorizontalSwipeDetector.swift in Sources */,
 				FFA29DDA6A3CEEBFEBC66964 /* NotchController.swift in Sources */,
+				175C153DF4128A4BC25BB9DB /* UnexpectedUsageReset.swift in Sources */,
 				0629C8A3B3E8513E049C1E0A /* UsageCardView.swift in Sources */,
 				7BA65BFAB5398BB975BBC335 /* UsageCompactView.swift in Sources */,
 				DBB3AD4481576CD3A7635401 /* UsageProgressView.swift in Sources */,
+				1BEB8A2CDEE67154F954ACF9 /* UsageResetMonitor.swift in Sources */,
+				754C60D8837490947E8F2614 /* UsageResetNotifying.swift in Sources */,
 				C44473D051A10F310924CF93 /* UsageSnapshot.swift in Sources */,
 				56F37E515193FD484DFA6FA5 /* UsageStore.swift in Sources */,
 			);
@@ -309,6 +327,8 @@
 				EFA2E326FD06D7C1D3E71E7E /* CodexAppServerProtocolTests.swift in Sources */,
 				B275B79859E328700BD2D0AE /* HorizontalSwipeAccumulatorTests.swift in Sources */,
 				351CF4EB054D059C988B1260 /* NotchInteractionGeometryTests.swift in Sources */,
+				0A6FC87E7047D4333294F598 /* UnexpectedUsageResetTests.swift in Sources */,
+				BACAD001999D2990FC4C42C5 /* UsageResetMonitorTests.swift in Sources */,
 				18B594D40144DEBB08162B0F /* UsageSnapshotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

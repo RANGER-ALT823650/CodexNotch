@@ -23,7 +23,7 @@ enum CodexUsageError: LocalizedError, Equatable {
         case let .malformedResponse(message):
             "Codex 返回了无效数据：\(message)"
         case .missingRateLimits:
-            "Codex 没有返回 5 小时和每周限额。"
+            "Codex 没有返回每周限额数据。"
         case let .timeout(method):
             "Codex 请求超时：\(method)"
         }

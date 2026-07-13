@@ -38,6 +38,27 @@ final class AgentUsageTests: XCTestCase {
         XCTAssertEqual(snapshot.days.suffix(2).map(\.totalTokens), [40, 200])
     }
 
+    func testQueueAggregationUsesTotalTokensForEveryAgentSource() {
+        let data = Data(#"""
+        {"source":"codex","model":"gpt","hour_start":"2026-07-01T01:00:00Z","total_tokens":100,"billable_total_tokens":90}
+        {"source":"antigravity","model":"gemini","hour_start":"2026-07-01T02:00:00Z","total_tokens":200,"billable_total_tokens":0}
+        {"source":"opencode","model":"glm","hour_start":"2026-07-01T03:00:00Z","total_tokens":300,"billable_total_tokens":0}
+        {"source":"mimo","model":"mimo","hour_start":"2026-07-01T04:00:00Z","total_tokens":400,"billable_total_tokens":0}
+        """#.utf8)
+        let now = date("2026-07-01T12:00:00Z")
+
+        let snapshot = AgentTokenTrackerUsageProvider.makeSnapshot(
+            from: data,
+            calendar: utcCalendar(),
+            now: now,
+            fetchedAt: now
+        )
+
+        XCTAssertEqual(snapshot.days.last?.totalTokens, 1_000)
+        XCTAssertEqual(snapshot.totalTokens, 1_000)
+        XCTAssertEqual(snapshot.sources, ["antigravity", "codex", "mimo", "opencode"])
+    }
+
     func testHeatLevelsUseFourRelativeBands() {
         let data = Data(#"""
         {"source":"codex","model":"gpt","hour_start":"2026-06-28T01:00:00Z","total_tokens":25}

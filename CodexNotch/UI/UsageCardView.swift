@@ -138,8 +138,9 @@ struct UsageCardView: View {
     private var codexContent: some View {
         if let snapshot = codexStore.snapshot {
             HStack(spacing: 20) {
-                UsageProgressView(window: snapshot.primary)
-                Divider().overlay(.white.opacity(0.12))
+                // NOTE: Codex 已取消 5 小时限额，注释掉 primary 进度环。
+                // UsageProgressView(window: snapshot.primary)
+                // Divider().overlay(.white.opacity(0.12))
                 UsageProgressView(window: snapshot.secondary)
             }
         } else if codexStore.isRefreshing {

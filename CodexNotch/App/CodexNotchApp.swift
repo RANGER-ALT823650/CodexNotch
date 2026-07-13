@@ -30,7 +30,8 @@ private struct MenuBarContent: View {
 
     var body: some View {
         if let snapshot = runtime.usageStore.snapshot {
-            Text("5 小时剩余 \(Int(snapshot.primary.remainingPercent.rounded()))%")
+            // NOTE: Codex 已取消 5 小时限额，注释掉 primary 的显示。
+            // Text("5 小时剩余 \(Int(snapshot.primary.remainingPercent.rounded()))%")
             Text("一周剩余 \(Int(snapshot.secondary.remainingPercent.rounded()))%")
             Divider()
         }
@@ -69,6 +70,15 @@ private struct MenuBarContent: View {
                 || runtime.agentUsageStore.isRefreshing
         )
 
+        Button(
+            runtime.usageStore.isManualResetSuppressionActive
+                ? "已标记本人手动 Reset（10 分钟内）"
+                : "标记接下来的 Reset 为本人操作"
+        ) {
+            runtime.usageStore.markNextResetAsUserInitiated()
+        }
+        .disabled(runtime.usageStore.isManualResetSuppressionActive)
+
         Toggle("登录时启动", isOn: Binding(
             get: { runtime.launchAtLoginEnabled },
             set: { enabled in runtime.setLaunchAtLogin(enabled) }
@@ -80,6 +90,7 @@ private struct MenuBarContent: View {
         ))
 
         if let error = runtime.usageStore.errorMessage
+            ?? runtime.usageStore.resetNotificationError
             ?? runtime.antigravityStore.errorMessage
             ?? runtime.agentUsageStore.errorMessage
             ?? runtime.launchAtLoginError

@@ -5,14 +5,22 @@ import Observation
 @Observable
 final class UsageStore {
     private let provider: any CodexUsageProviding
+    private let resetMonitor: UsageResetMonitor
     @ObservationIgnored private var refreshLoop: Task<Void, Never>?
 
     private(set) var snapshot: UsageSnapshot?
     private(set) var isRefreshing = false
     private(set) var errorMessage: String?
+    private(set) var resetNotificationError: String?
+    private(set) var manualResetSuppressionUntil: Date?
 
-    init(provider: any CodexUsageProviding) {
+    init(
+        provider: any CodexUsageProviding,
+        resetMonitor: UsageResetMonitor = UsageResetMonitor()
+    ) {
         self.provider = provider
+        self.resetMonitor = resetMonitor
+        manualResetSuppressionUntil = resetMonitor.manualResetSuppressionUntil
     }
 
     func refresh() async {
@@ -21,8 +29,18 @@ final class UsageStore {
         defer { isRefreshing = false }
 
         do {
-            snapshot = try await provider.fetchUsage()
+            let nextSnapshot = try await provider.fetchUsage()
+            snapshot = nextSnapshot
             errorMessage = nil
+            do {
+                try await resetMonitor.observe(nextSnapshot)
+                resetNotificationError = nil
+            } catch {
+                // Usage remains valid even when Telegram delivery fails. The
+                // monitor keeps the event pending and retries on the next poll.
+                resetNotificationError = error.localizedDescription
+            }
+            manualResetSuppressionUntil = resetMonitor.manualResetSuppressionUntil
         } catch is CancellationError {
             return
         } catch {
@@ -46,5 +64,15 @@ final class UsageStore {
     func stopAutomaticRefresh() {
         refreshLoop?.cancel()
         refreshLoop = nil
+    }
+
+    var isManualResetSuppressionActive: Bool {
+        guard let manualResetSuppressionUntil else { return false }
+        return manualResetSuppressionUntil > Date()
+    }
+
+    func markNextResetAsUserInitiated() {
+        resetMonitor.markNextResetAsUserInitiated()
+        manualResetSuppressionUntil = resetMonitor.manualResetSuppressionUntil
     }
 }

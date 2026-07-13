@@ -68,6 +68,7 @@ final class NotchController {
                 self?.compact()
             }
         },
+        // NOTE: Codex 已取消 5 小时限额，左侧改为显示 provider 信息，不再显示 5h。
         compactLeading: {
             UsageCompactView(
                 kind: .primary

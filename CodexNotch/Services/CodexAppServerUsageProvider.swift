@@ -36,13 +36,17 @@ actor CodexAppServerUsageProvider: CodexUsageProviding {
         fetchedAt: Date
     ) throws -> UsageSnapshot {
         let limits = response.rateLimitsByLimitId?["codex"] ?? response.rateLimits
-        guard let primary = limits.primary, let secondary = limits.secondary else {
+        // NOTE: Codex 已取消 5 小时限额。API 可能只返回 primary（周限额被提升为
+        // 唯一窗口），也可能仍返回 secondary。优先使用 secondary，降级到 primary。
+        // guard let primary = limits.primary, let secondary = limits.secondary else {
+        guard let weekly = limits.secondary ?? limits.primary else {
             throw CodexUsageError.missingRateLimits
         }
 
         return UsageSnapshot(
-            primary: primary.usageWindow,
-            secondary: secondary.usageWindow,
+            // 只有当 secondary 存在时，primary 才可能是独立的 5h 窗口
+            primary: limits.secondary != nil ? limits.primary?.usageWindow : nil,
+            secondary: weekly.usageWindow,
             fetchedAt: fetchedAt
         )
     }

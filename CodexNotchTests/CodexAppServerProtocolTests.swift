@@ -13,8 +13,9 @@ final class CodexAppServerProtocolTests: XCTestCase {
             fetchedAt: Date(timeIntervalSince1970: 100)
         )
 
-        XCTAssertEqual(snapshot.primary.remainingPercent, 76)
-        XCTAssertEqual(snapshot.primary.durationMinutes, 300)
+        // NOTE: primary 现在是可选的（Codex 已取消 5 小时限额），但 API 若仍返回则照常解析。
+        XCTAssertEqual(snapshot.primary?.remainingPercent, 76)
+        XCTAssertEqual(snapshot.primary?.durationMinutes, 300)
         XCTAssertEqual(snapshot.secondary.remainingPercent, 23)
         XCTAssertEqual(snapshot.secondary.durationMinutes, 10_080)
     }
@@ -27,7 +28,7 @@ final class CodexAppServerProtocolTests: XCTestCase {
         let response = try CodexAppServerUsageProvider.decodeRateLimitsResult(from: data)
         let snapshot = try CodexAppServerUsageProvider.makeSnapshot(from: response, fetchedAt: .now)
 
-        XCTAssertEqual(snapshot.primary.remainingPercent, 90)
+        XCTAssertEqual(snapshot.primary?.remainingPercent, 90)
         XCTAssertEqual(snapshot.secondary.remainingPercent, 80)
     }
 }
