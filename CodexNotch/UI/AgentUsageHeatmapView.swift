@@ -179,6 +179,7 @@ private struct AgentUsageHeatmap: View {
 
     private func color(for level: Int) -> Color {
         switch level {
+        case 99: Color.red
         case 1: Color(red: 0.04, green: 0.22, blue: 0.10)
         case 2: Color(red: 0.00, green: 0.43, blue: 0.18)
         case 3: Color(red: 0.20, green: 0.72, blue: 0.25)

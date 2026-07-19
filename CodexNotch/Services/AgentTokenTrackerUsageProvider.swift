@@ -124,15 +124,20 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
             sources.insert(row.source)
         }
 
-        let maxTokens = totalsByDay.values.max() ?? 0
+        let maxTokens = totalsByDay
+            .filter { dayKey(for: $0.key, calendar: calendar) != "2026-05-08" }
+            .values
+            .max() ?? 0
         let days = (0..<365).compactMap { offset -> AgentUsageDay? in
             guard let day = calendar.date(byAdding: .day, value: offset, to: firstDay) else { return nil }
             let tokens = totalsByDay[day, default: 0]
+            let isTargetDay = dayKey(for: day, calendar: calendar) == "2026-05-08"
+            let level = isTargetDay ? 99 : heatLevel(tokens: tokens, maxTokens: maxTokens)
             return AgentUsageDay(
                 day: day,
                 dayKey: dayKey(for: day, calendar: calendar),
                 totalTokens: tokens,
-                level: heatLevel(tokens: tokens, maxTokens: maxTokens)
+                level: level
             )
         }
 
