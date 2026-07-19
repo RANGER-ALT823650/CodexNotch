@@ -156,10 +156,13 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
         let x = Double(tokens) / Double(maxTokens)
         let clampedX = min(1.0, max(0.0, x))
 
-        let yMax = exp(1.0) - 1.0
-        let x1 = sqrt(log(0.25 * yMax + 1.0))
-        let x2 = sqrt(log(0.50 * yMax + 1.0))
-        let x3 = sqrt(log(0.75 * yMax + 1.0))
+        // Power function: y = x^0.35 (optimal for the distribution of local token usage)
+        // Divide y-axis [0, 1] into 4 equal bands: 0.25, 0.5, 0.75, 1.0
+        // Thresholds on x: x_k = y_k^(1 / 0.35)
+        let exponent = 1.0 / 0.35
+        let x1 = pow(0.25, exponent)
+        let x2 = pow(0.50, exponent)
+        let x3 = pow(0.75, exponent)
 
         if clampedX <= x1 {
             return 1
