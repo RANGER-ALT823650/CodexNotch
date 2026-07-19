@@ -124,15 +124,16 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
             sources.insert(row.source)
         }
 
-        let maxTokens = totalsByDay
+        let activeTokenTotals = totalsByDay
             .filter { dayKey(for: $0.key, calendar: calendar) != "2026-05-08" }
             .values
-            .max() ?? 0
+            .filter { $0 > 0 }
+            .sorted()
         let days = (0..<365).compactMap { offset -> AgentUsageDay? in
             guard let day = calendar.date(byAdding: .day, value: offset, to: firstDay) else { return nil }
             let tokens = totalsByDay[day, default: 0]
             let isTargetDay = dayKey(for: day, calendar: calendar) == "2026-05-08"
-            let level = isTargetDay ? 99 : heatLevel(tokens: tokens, maxTokens: maxTokens)
+            let level = isTargetDay ? 99 : heatLevel(tokens: tokens, activeTokenTotals: activeTokenTotals)
             return AgentUsageDay(
                 day: day,
                 dayKey: dayKey(for: day, calendar: calendar),
@@ -150,25 +151,32 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
         )
     }
 
-    private static func heatLevel(tokens: Int64, maxTokens: Int64) -> Int {
-        guard tokens > 0, maxTokens > 0 else { return 0 }
+    private static func heatLevel(tokens: Int64, activeTokenTotals: [Int64]) -> Int {
+        guard tokens > 0, activeTokenTotals.isEmpty == false else { return 0 }
 
-        let x = Double(tokens) / Double(maxTokens)
-        let clampedX = min(1.0, max(0.0, x))
+        var lowerBound = 0
+        var upperBound = activeTokenTotals.count
+        while lowerBound < upperBound {
+            let middle = (lowerBound + upperBound) / 2
+            if activeTokenTotals[middle] < tokens {
+                lowerBound = middle + 1
+            } else {
+                upperBound = middle
+            }
+        }
 
-        // Power function: y = x^0.35 (optimal for the distribution of local token usage)
-        // Divide y-axis [0, 1] into 4 equal bands: 0.25, 0.5, 0.75, 1.0
-        // Thresholds on x: x_k = y_k^(1 / 0.35)
-        let exponent = 1.0 / 0.35
-        let x1 = pow(0.25, exponent)
-        let x2 = pow(0.50, exponent)
-        let x3 = pow(0.75, exponent)
+        let percentile = Double(lowerBound + 1) / Double(activeTokenTotals.count)
 
-        if clampedX <= x1 {
+        // Dynamic non-linear percentile bands:
+        // Level 1: Lowest 25% (percentile <= 0.25)
+        // Level 2: Mid-range 45% (percentile <= 0.70)
+        // Level 3: High-range 25% (percentile <= 0.95)
+        // Level 4: Top 5% peak usage (percentile > 0.95)
+        if percentile <= 0.25 {
             return 1
-        } else if clampedX <= x2 {
+        } else if percentile <= 0.70 {
             return 2
-        } else if clampedX <= x3 {
+        } else if percentile <= 0.95 {
             return 3
         } else {
             return 4
