@@ -54,7 +54,11 @@ private struct AgentUsageHeatmap: View {
 
     init(
         snapshot: AgentUsageSnapshot,
-        calendar: Calendar = .current,
+        calendar: Calendar = {
+            var cal = Calendar(identifier: .gregorian)
+            cal.timeZone = TimeZone(identifier: "Asia/Shanghai")!
+            return cal
+        }(),
         onDaySelected: @escaping (AgentUsageDay, NSPoint) -> Void
     ) {
         weeks = HeatmapWeek.makeWeeks(days: snapshot.days, calendar: calendar)

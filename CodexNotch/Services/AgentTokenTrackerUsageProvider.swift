@@ -92,7 +92,11 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
 
     static func makeSnapshot(
         from data: Data,
-        calendar: Calendar = .current,
+        calendar: Calendar = {
+            var cal = Calendar(identifier: .gregorian)
+            cal.timeZone = TimeZone(identifier: "Asia/Shanghai")!
+            return cal
+        }(),
         now: Date = Date(),
         fetchedAt: Date = Date()
     ) -> AgentUsageSnapshot {
