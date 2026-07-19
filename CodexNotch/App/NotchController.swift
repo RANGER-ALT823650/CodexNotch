@@ -219,7 +219,7 @@ final class NotchController {
         let lowerAppName = appName.lowercased()
         let lowerBundleID = bundleID.lowercased()
 
-        if lowerAppName.contains("codex") || lowerBundleID.contains("codex") {
+        if lowerAppName.contains("codex") || lowerBundleID.contains("codex") || lowerAppName.contains("antigravity") || lowerBundleID.contains("antigravity") {
             return true
         }
 
@@ -246,7 +246,7 @@ final class NotchController {
                     if AXUIElementCopyAttributeValue(windowRef, kAXTitleAttribute as CFString, &title) == .success,
                        let titleString = title as? String {
                         let lowerTitle = titleString.lowercased()
-                        if lowerTitle.contains("agy") || lowerTitle.contains("codex") {
+                        if lowerTitle.contains("agy") || lowerTitle.contains("codex") || lowerTitle.contains("antigravity") {
                             return true
                         }
                     }
@@ -260,7 +260,7 @@ final class NotchController {
                           windowOwnerPID == frontmost.processIdentifier,
                           let windowName = info[kCGWindowName as String] as? String else { continue }
                     let lowerTitle = windowName.lowercased()
-                    if lowerTitle.contains("agy") || lowerTitle.contains("codex") {
+                    if lowerTitle.contains("agy") || lowerTitle.contains("codex") || lowerTitle.contains("antigravity") {
                         return true
                     }
                 }

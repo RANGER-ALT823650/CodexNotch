@@ -61,9 +61,9 @@ final class AgentUsageTests: XCTestCase {
 
     func testHeatLevelsUseFourRelativeBands() {
         let data = Data(#"""
-        {"source":"codex","model":"gpt","hour_start":"2026-06-28T01:00:00Z","total_tokens":25}
-        {"source":"codex","model":"gpt","hour_start":"2026-06-29T01:00:00Z","total_tokens":50}
-        {"source":"codex","model":"gpt","hour_start":"2026-06-30T01:00:00Z","total_tokens":75}
+        {"source":"codex","model":"gpt","hour_start":"2026-06-28T01:00:00Z","total_tokens":50}
+        {"source":"codex","model":"gpt","hour_start":"2026-06-29T01:00:00Z","total_tokens":70}
+        {"source":"codex","model":"gpt","hour_start":"2026-06-30T01:00:00Z","total_tokens":85}
         {"source":"codex","model":"gpt","hour_start":"2026-07-01T01:00:00Z","total_tokens":100}
         """#.utf8)
         let now = date("2026-07-01T12:00:00Z")

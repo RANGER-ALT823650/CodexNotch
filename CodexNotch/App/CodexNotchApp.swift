@@ -84,7 +84,7 @@ private struct MenuBarContent: View {
             set: { enabled in runtime.setLaunchAtLogin(enabled) }
         ))
 
-        Toggle("仅在 agy/codex 窗口前台时显示", isOn: Binding(
+        Toggle("仅在 agy/codex/antigravity 窗口前台时显示", isOn: Binding(
             get: { runtime.onlyShowOnForeground },
             set: { runtime.onlyShowOnForeground = $0 }
         ))

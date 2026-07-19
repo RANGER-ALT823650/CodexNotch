@@ -124,7 +124,7 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
             sources.insert(row.source)
         }
 
-        let activeTokenTotals = totalsByDay.values.filter { $0 > 0 }.sorted()
+        let maxTokens = totalsByDay.values.max() ?? 0
         let days = (0..<365).compactMap { offset -> AgentUsageDay? in
             guard let day = calendar.date(byAdding: .day, value: offset, to: firstDay) else { return nil }
             let tokens = totalsByDay[day, default: 0]
@@ -132,7 +132,7 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
                 day: day,
                 dayKey: dayKey(for: day, calendar: calendar),
                 totalTokens: tokens,
-                level: heatLevel(tokens: tokens, activeTokenTotals: activeTokenTotals)
+                level: heatLevel(tokens: tokens, maxTokens: maxTokens)
             )
         }
 
@@ -145,23 +145,26 @@ actor AgentTokenTrackerUsageProvider: AgentUsageProviding {
         )
     }
 
-    private static func heatLevel(tokens: Int64, activeTokenTotals: [Int64]) -> Int {
-        guard tokens > 0, activeTokenTotals.isEmpty == false else { return 0 }
-        guard activeTokenTotals.first != activeTokenTotals.last else { return 2 }
+    private static func heatLevel(tokens: Int64, maxTokens: Int64) -> Int {
+        guard tokens > 0, maxTokens > 0 else { return 0 }
 
-        var lowerBound = 0
-        var upperBound = activeTokenTotals.count
-        while lowerBound < upperBound {
-            let middle = (lowerBound + upperBound) / 2
-            if activeTokenTotals[middle] < tokens {
-                lowerBound = middle + 1
-            } else {
-                upperBound = middle
-            }
+        let x = Double(tokens) / Double(maxTokens)
+        let clampedX = min(1.0, max(0.0, x))
+
+        let yMax = exp(1.0) - 1.0
+        let x1 = sqrt(log(0.25 * yMax + 1.0))
+        let x2 = sqrt(log(0.50 * yMax + 1.0))
+        let x3 = sqrt(log(0.75 * yMax + 1.0))
+
+        if clampedX <= x1 {
+            return 1
+        } else if clampedX <= x2 {
+            return 2
+        } else if clampedX <= x3 {
+            return 3
+        } else {
+            return 4
         }
-
-        let percentile = Double(lowerBound + 1) / Double(activeTokenTotals.count)
-        return min(4, max(1, Int(ceil(percentile * 4))))
     }
 
     private static func dayKey(for date: Date, calendar: Calendar) -> String {
