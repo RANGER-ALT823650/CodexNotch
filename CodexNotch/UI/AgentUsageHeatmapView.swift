@@ -3,14 +3,15 @@ import SwiftUI
 
 struct AgentUsageHeatmapView: View {
     let store: AgentUsageStore
+    var scale: CGFloat = 1.0
     let onDaySelected: (AgentUsageDay, NSPoint) -> Void
 
     var body: some View {
         Group {
             if let snapshot = store.snapshot, snapshot.totalTokens > 0 {
-                AgentUsageHeatmap(snapshot: snapshot, onDaySelected: onDaySelected)
+                AgentUsageHeatmap(snapshot: snapshot, scale: scale, onDaySelected: onDaySelected)
             } else if store.isRefreshing {
-                VStack(spacing: 8) {
+                VStack(spacing: 8 * scale) {
                     ProgressView().controlSize(.small)
                     Text("正在汇总本机智能体 Token…")
                         .font(.caption)
@@ -30,30 +31,45 @@ struct AgentUsageHeatmapView: View {
 }
 
 private struct AgentUsageHeatmap: View {
-    private enum Layout {
-        static let cellSize: CGFloat = 7
-        static let columnSpacing: CGFloat = 0.8
-        static let rowSpacing: CGFloat = 2.6
-        static let labelWidth: CGFloat = 16
-        static let labelGap: CGFloat = 3
-        static let monthHeight: CGFloat = 10
-        static let monthGap: CGFloat = 4
+    private struct Layout {
+        let cellSize: CGFloat
+        let columnSpacing: CGFloat
+        let rowSpacing: CGFloat
+        let labelWidth: CGFloat
+        let labelGap: CGFloat
+        let monthHeight: CGFloat
+        let monthGap: CGFloat
+        let cellOrigin: CGPoint
+        let columnStride: CGFloat
+        let rowStride: CGFloat
 
-        static let cellOrigin = CGPoint(
-            x: labelWidth + labelGap,
-            y: monthHeight + monthGap
-        )
-        static let columnStride = cellSize + columnSpacing
-        static let rowStride = cellSize + rowSpacing
+        init(scale: CGFloat) {
+            cellSize = 7 * scale
+            columnSpacing = 0.8 * scale
+            rowSpacing = 2.6 * scale
+            labelWidth = 16 * scale
+            labelGap = 3 * scale
+            monthHeight = 10 * scale
+            monthGap = 4 * scale
+            cellOrigin = CGPoint(
+                x: labelWidth + labelGap,
+                y: monthHeight + monthGap
+            )
+            columnStride = cellSize + columnSpacing
+            rowStride = cellSize + rowSpacing
+        }
     }
 
     private let weeks: [HeatmapWeek]
     private let activeDays: Int
+    private let scale: CGFloat
+    private let layout: Layout
     private let onDaySelected: (AgentUsageDay, NSPoint) -> Void
     @State private var hoveredDay: AgentUsageDay?
 
     init(
         snapshot: AgentUsageSnapshot,
+        scale: CGFloat = 1.0,
         calendar: Calendar = {
             var cal = Calendar(identifier: .gregorian)
             cal.timeZone = TimeZone(identifier: "Asia/Shanghai")!
@@ -63,18 +79,20 @@ private struct AgentUsageHeatmap: View {
     ) {
         weeks = HeatmapWeek.makeWeeks(days: snapshot.days, calendar: calendar)
         activeDays = snapshot.activeDays
+        self.scale = scale
+        self.layout = Layout(scale: scale)
         self.onDaySelected = onDaySelected
     }
 
     private var canvasSize: CGSize {
         let columnCount = CGFloat(weeks.count)
         return CGSize(
-            width: Layout.cellOrigin.x
-                + columnCount * Layout.cellSize
-                + max(0, columnCount - 1) * Layout.columnSpacing,
-            height: Layout.cellOrigin.y
-                + 7 * Layout.cellSize
-                + 6 * Layout.rowSpacing
+            width: layout.cellOrigin.x
+                + columnCount * layout.cellSize
+                + max(0, columnCount - 1) * layout.columnSpacing,
+            height: layout.cellOrigin.y
+                + 7 * layout.cellSize
+                + 6 * layout.rowSpacing
         )
     }
 
@@ -110,12 +128,12 @@ private struct AgentUsageHeatmap: View {
     private func drawMonthLabels(in context: inout GraphicsContext) {
         for (column, week) in weeks.enumerated() where week.monthLabel.isEmpty == false {
             let label = Text(week.monthLabel)
-                .font(.system(size: 8.5))
+                .font(.system(size: 8.5 * scale))
                 .foregroundStyle(.secondary)
             context.draw(
                 label,
                 at: CGPoint(
-                    x: Layout.cellOrigin.x + CGFloat(column) * Layout.columnStride,
+                    x: layout.cellOrigin.x + CGFloat(column) * layout.columnStride,
                     y: 0
                 ),
                 anchor: .topLeading
@@ -127,15 +145,15 @@ private struct AgentUsageHeatmap: View {
         let labels = ["日", "一", "", "三", "", "五", ""]
         for (row, value) in labels.enumerated() where value.isEmpty == false {
             let label = Text(value)
-                .font(.system(size: 8.5))
+                .font(.system(size: 8.5 * scale))
                 .foregroundStyle(.secondary)
             context.draw(
                 label,
                 at: CGPoint(
-                    x: Layout.labelWidth,
-                    y: Layout.cellOrigin.y
-                        + CGFloat(row) * Layout.rowStride
-                        + Layout.cellSize / 2
+                    x: layout.labelWidth,
+                    y: layout.cellOrigin.y
+                        + CGFloat(row) * layout.rowStride
+                        + layout.cellSize / 2
                 ),
                 anchor: .trailing
             )
@@ -146,28 +164,28 @@ private struct AgentUsageHeatmap: View {
         for (column, week) in weeks.enumerated() {
             for (row, day) in week.days.enumerated() {
                 let origin = CGPoint(
-                    x: Layout.cellOrigin.x + CGFloat(column) * Layout.columnStride,
-                    y: Layout.cellOrigin.y + CGFloat(row) * Layout.rowStride
+                    x: layout.cellOrigin.x + CGFloat(column) * layout.columnStride,
+                    y: layout.cellOrigin.y + CGFloat(row) * layout.rowStride
                 )
-                let rect = CGRect(origin: origin, size: CGSize(width: Layout.cellSize, height: Layout.cellSize))
-                let path = Path(roundedRect: rect, cornerRadius: 1.5)
+                let rect = CGRect(origin: origin, size: CGSize(width: layout.cellSize, height: layout.cellSize))
+                let path = Path(roundedRect: rect, cornerRadius: 1.5 * scale)
                 context.fill(path, with: .color(color(for: day?.level ?? 0)))
             }
         }
     }
 
     private func day(at location: CGPoint) -> AgentUsageDay? {
-        let relativeX = location.x - Layout.cellOrigin.x
-        let relativeY = location.y - Layout.cellOrigin.y
+        let relativeX = location.x - layout.cellOrigin.x
+        let relativeY = location.y - layout.cellOrigin.y
         guard relativeX >= 0, relativeY >= 0 else { return nil }
 
-        let column = Int(relativeX / Layout.columnStride)
-        let row = Int(relativeY / Layout.rowStride)
+        let column = Int(relativeX / layout.columnStride)
+        let row = Int(relativeY / layout.rowStride)
         guard weeks.indices.contains(column), weeks[column].days.indices.contains(row) else { return nil }
 
         // Do not treat the spacing between cells as part of a cell's hover target.
-        guard relativeX.truncatingRemainder(dividingBy: Layout.columnStride) <= Layout.cellSize,
-              relativeY.truncatingRemainder(dividingBy: Layout.rowStride) <= Layout.cellSize
+        guard relativeX.truncatingRemainder(dividingBy: layout.columnStride) <= layout.cellSize,
+              relativeY.truncatingRemainder(dividingBy: layout.rowStride) <= layout.cellSize
         else { return nil }
         return weeks[column].days[row]
     }

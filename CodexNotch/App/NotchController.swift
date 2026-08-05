@@ -53,11 +53,13 @@ final class NotchController {
         style: .auto,
         expanded: { [weak self, codexStore, antigravityStore, agentUsageStore] in
             let safeAreaTop = self?.targetScreen.safeAreaInsets.top ?? 0
-            return UsageCardView(
+            let cardSize = UsageCardView.contentSize(for: self?.targetScreen)
+            UsageCardView(
                 codexStore: codexStore,
                 antigravityStore: antigravityStore,
                 agentUsageStore: agentUsageStore,
                 safeAreaTop: safeAreaTop,
+                cardSize: cardSize,
                 onAgentDaySelected: { [weak self] day, cursor in
                     self?.showAgentDayDetail(day, cursor: cursor)
                 },
@@ -333,9 +335,10 @@ final class NotchController {
     private func showAgentDayDetail(_ day: AgentUsageDay, cursor: NSPoint) {
         guard isExpanded else { return }
         let screen = notch.windowController?.window?.screen ?? targetScreen
+        let cardSize = UsageCardView.contentSize(for: screen)
         let expandedBottom = screen.frame.maxY
             - screen.safeAreaInsets.top
-            - UsageCardView.contentSize.height
+            - cardSize.height
             - 15
         agentDayDetailPanel.show(
             day: day,
@@ -384,8 +387,9 @@ final class NotchController {
 
     private var expandedInteractionFrame: NSRect {
         let screen = notch.windowController?.window?.screen ?? targetScreen
-        let width = UsageCardView.contentSize.width + 50
-        let height = UsageCardView.contentSize.height + screen.safeAreaInsets.top + 45
+        let cardSize = UsageCardView.contentSize(for: screen)
+        let width = cardSize.width + 50
+        let height = cardSize.height + screen.safeAreaInsets.top + 45
         return NSRect(
             x: screen.frame.midX - width / 2,
             y: screen.frame.maxY - height,

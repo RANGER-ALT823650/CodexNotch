@@ -3,20 +3,53 @@ import SwiftUI
 struct UsageCardView: View {
     typealias Provider = UsageProvider
 
-    static let contentSize = CGSize(width: 440, height: 108)
+    static let referenceSize = CGSize(width: 440, height: 108)
+    static var contentSize: CGSize { referenceSize }
+
+    static func contentSize(for screen: NSScreen?) -> CGSize {
+        guard let screen else { return referenceSize }
+        let w = round(screen.frame.width * 0.28)
+        let h = round(screen.frame.height * 0.11)
+        return CGSize(width: w, height: h)
+    }
 
     let codexStore: UsageStore
     let antigravityStore: AntigravityUsageStore
     let agentUsageStore: AgentUsageStore
     let safeAreaTop: CGFloat
+    let cardSize: CGSize
     let onAgentDaySelected: (AgentUsageDay, NSPoint) -> Void
     let onAgentDetailDismiss: () -> Void
     let onCollapse: () -> Void
     private var provider: Provider { AppRuntime.shared.activeProvider }
     @State private var swipeDirection: HorizontalSwipeDirection = .left
 
+    private var scale: CGFloat {
+        cardSize.width / Self.referenceSize.width
+    }
+
+    init(
+        codexStore: UsageStore,
+        antigravityStore: AntigravityUsageStore,
+        agentUsageStore: AgentUsageStore,
+        safeAreaTop: CGFloat,
+        cardSize: CGSize = Self.referenceSize,
+        onAgentDaySelected: @escaping (AgentUsageDay, NSPoint) -> Void,
+        onAgentDetailDismiss: @escaping () -> Void,
+        onCollapse: @escaping () -> Void
+    ) {
+        self.codexStore = codexStore
+        self.antigravityStore = antigravityStore
+        self.agentUsageStore = agentUsageStore
+        self.safeAreaTop = safeAreaTop
+        self.cardSize = cardSize
+        self.onAgentDaySelected = onAgentDaySelected
+        self.onAgentDetailDismiss = onAgentDetailDismiss
+        self.onCollapse = onCollapse
+    }
+
     var body: some View {
-        let headerHeight = max(safeAreaTop, 24.0)
+        let headerHeight = max(safeAreaTop, 24.0 * scale)
 
         ZStack(alignment: .top) {
             // Content and footer occupying the main 150pt height
@@ -27,10 +60,11 @@ struct UsageCardView: View {
                         case .codex:
                             codexContent
                         case .antigravity:
-                            AntigravityUsageView(store: antigravityStore)
+                            AntigravityUsageView(store: antigravityStore, scale: scale)
                         case .allAgents:
                             AgentUsageHeatmapView(
                                 store: agentUsageStore,
+                                scale: scale,
                                 onDaySelected: onAgentDaySelected
                             )
                         }
@@ -41,7 +75,7 @@ struct UsageCardView: View {
                 .frame(maxHeight: .infinity)
 
                 if currentError != nil {
-                    Spacer().frame(height: 2)
+                    Spacer().frame(height: 2 * scale)
                     footer
                 }
             }
@@ -50,21 +84,21 @@ struct UsageCardView: View {
             //.padding(.bottom, 12)
 
             // Header elements shifted UP into the notch area (left and right of the notch)
-            HStack(spacing: 8) {
-                HStack(spacing: 6) {
+            HStack(spacing: 8 * scale) {
+                HStack(spacing: 6 * scale) {
                     Image(systemName: providerIcon)
                         .foregroundStyle(providerColor)
                     Text(providerTitle)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 13 * scale, weight: .semibold))
                 }
 
                 Spacer()
 
-                HStack(spacing: 12) {
+                HStack(spacing: 12 * scale) {
                     Text(updateText)
-                        .font(.system(size: 10))
+                        .font(.system(size: 10 * scale))
                         .foregroundStyle(.tertiary)
-                        .padding(.trailing, 4)
+                        .padding(.trailing, 4 * scale)
 
                     Button {
                         refresh(provider)
@@ -89,11 +123,11 @@ struct UsageCardView: View {
                     .help("收起")
                 }
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 8 * scale)
             .frame(height: headerHeight)
             .offset(y: -headerHeight)
         }
-        .frame(width: Self.contentSize.width, height: Self.contentSize.height)
+        .frame(width: cardSize.width, height: cardSize.height)
         .foregroundStyle(.white)
         .background {
             HorizontalSwipeDetector(onSwipe: switchProvider)
@@ -125,7 +159,7 @@ struct UsageCardView: View {
                     .help(currentError ?? "")
             }
         }
-        .font(.system(size: 10))
+        .font(.system(size: 10 * scale))
         .foregroundStyle(.tertiary)
     }
 
@@ -137,14 +171,32 @@ struct UsageCardView: View {
     @ViewBuilder
     private var codexContent: some View {
         if let snapshot = codexStore.snapshot {
-            HStack(spacing: 20) {
-                // NOTE: Codex 已取消 5 小时限额，注释掉 primary 进度环。
-                // UsageProgressView(window: snapshot.primary)
-                // Divider().overlay(.white.opacity(0.12))
-                UsageProgressView(window: snapshot.secondary)
+            GeometryReader { proxy in
+                let horizontalPadding: CGFloat = 16 * scale
+                let spacing: CGFloat = 12 * scale
+                let totalWidth = max(proxy.size.width - (horizontalPadding * 2), 0)
+                let hasCredits = snapshot.credits != nil
+                let availableWidth = max(totalWidth - (hasCredits ? spacing : 0), 0)
+                let leftWidth = availableWidth * (hasCredits ? 0.72 : 1.0)
+                let rightWidth = availableWidth * (hasCredits ? 0.28 : 0.0)
+
+                HStack(spacing: hasCredits ? spacing : 0) {
+                    UsageProgressView(window: snapshot.secondary, scale: scale)
+                        .frame(width: leftWidth)
+
+                    if let credits = snapshot.credits {
+                        Divider()
+                            .overlay(.white.opacity(0.12))
+
+                        UsageCreditsView(credits: credits, scale: scale)
+                            .frame(width: rightWidth)
+                    }
+                }
+                .padding(.horizontal, horizontalPadding)
+                .frame(maxHeight: .infinity, alignment: .center)
             }
         } else if codexStore.isRefreshing {
-            VStack(spacing: 10) {
+            VStack(spacing: 10 * scale) {
                 ProgressView().controlSize(.small)
                 Text("正在读取 Codex 用量…")
                     .font(.caption)

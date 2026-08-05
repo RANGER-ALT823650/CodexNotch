@@ -31,4 +31,15 @@ final class CodexAppServerProtocolTests: XCTestCase {
         XCTAssertEqual(snapshot.primary?.remainingPercent, 90)
         XCTAssertEqual(snapshot.secondary.remainingPercent, 80)
     }
+
+    func testDecodesCreditsObjectAndStringBalance() throws {
+        let data = Data(
+            #"{"rateLimits":{"limitId":"codex","primary":{"usedPercent":100,"windowDurationMins":10080,"resetsAt":1786166215},"secondary":null,"credits":{"hasCredits":true,"unlimited":false,"balance":"1288.7795030000"}},"rateLimitsByLimitId":null}"#.utf8
+        )
+
+        let response = try CodexAppServerUsageProvider.decodeRateLimitsResult(from: data)
+        let snapshot = try CodexAppServerUsageProvider.makeSnapshot(from: response, fetchedAt: .now)
+
+        XCTAssertEqual(snapshot.credits, 1288.779503)
+    }
 }

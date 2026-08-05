@@ -31,6 +31,20 @@ struct UsageSnapshot: Equatable, Sendable {
     // NOTE: Codex 已取消 5 小时限额，primary 改为可选，不再在 UI 中展示。
     let primary: UsageWindow?
     let secondary: UsageWindow
+    let credits: Double?
     let fetchedAt: Date
+
+    init(
+        primary: UsageWindow?,
+        secondary: UsageWindow,
+        credits: Double? = nil,
+        fetchedAt: Date
+    ) {
+        self.primary = primary
+        self.secondary = secondary
+        self.credits = credits
+        self.fetchedAt = fetchedAt
+    }
 }
+
 

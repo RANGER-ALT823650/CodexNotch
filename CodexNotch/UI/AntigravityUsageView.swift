@@ -2,17 +2,18 @@ import SwiftUI
 
 struct AntigravityUsageView: View {
     let store: AntigravityUsageStore
+    var scale: CGFloat = 1.0
 
     var body: some View {
         Group {
             if let snapshot = store.snapshot {
-                HStack(spacing: 12) {
+                HStack(spacing: 12 * scale) {
                     ForEach(snapshot.groups) { group in
-                        VStack(alignment: .leading, spacing: 3) {
+                        VStack(alignment: .leading, spacing: 3 * scale) {
                             Text(group.title)
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: 11 * scale, weight: .semibold))
                                 .foregroundStyle(.secondary)
-                            HStack(spacing: 8) {
+                            HStack(spacing: 8 * scale) {
                                 ForEach(group.buckets) { bucket in
                                     quota(bucket)
                                 }
@@ -23,7 +24,7 @@ struct AntigravityUsageView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if store.isRefreshing {
-                VStack(spacing: 10) {
+                VStack(spacing: 10 * scale) {
                     ProgressView().controlSize(.small)
                     Text("正在读取 Antigravity 用量…")
                         .font(.caption)
@@ -41,13 +42,13 @@ struct AntigravityUsageView: View {
     }
 
     private func quota(_ bucket: AntigravityQuotaBucket) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 4 * scale) {
             HStack(alignment: .firstTextBaseline) {
                 Text(bucket.title)
-                    .font(.system(size: 11, weight: .medium))
-                Spacer(minLength: 4)
+                    .font(.system(size: 11 * scale, weight: .medium))
+                Spacer(minLength: 4 * scale)
                 Text(remainingText(bucket))
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .font(.system(size: 14 * scale, weight: .bold, design: .rounded))
                     .monospacedDigit()
             }
 
@@ -57,12 +58,12 @@ struct AntigravityUsageView: View {
                 .controlSize(.small)
 
             Text(resetText(bucket))
-                .font(.system(size: 9))
+                .font(.system(size: 9 * scale))
                 .foregroundStyle(.tertiary)
                 .lineLimit(1)
         }
-        .padding(8)
-        .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 8))
+        .padding(8 * scale)
+        .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 8 * scale))
         .frame(maxWidth: .infinity)
     }
 

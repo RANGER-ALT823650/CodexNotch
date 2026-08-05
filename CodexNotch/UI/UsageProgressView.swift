@@ -2,15 +2,16 @@ import SwiftUI
 
 struct UsageProgressView: View {
     let window: UsageWindow
+    var scale: CGFloat = 1.0
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 6 * scale) {
             HStack(alignment: .firstTextBaseline) {
                 Text(window.title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13 * scale, weight: .semibold))
                 Spacer()
                 Text("\(Int(window.remainingPercent.rounded()))%")
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                    .font(.system(size: 19 * scale, weight: .bold, design: .rounded))
                     .monospacedDigit()
             }
 
@@ -22,14 +23,14 @@ struct UsageProgressView: View {
                         .frame(width: proxy.size.width * window.remainingFraction)
                 }
             }
-            .frame(height: 8)
+            .frame(height: 8 * scale)
 
             HStack {
                 Text("剩余用量")
                 Spacer()
                 Text(resetDescription)
             }
-            .font(.system(size: 10, weight: .medium))
+            .font(.system(size: 10 * scale, weight: .medium))
             .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .ignore)

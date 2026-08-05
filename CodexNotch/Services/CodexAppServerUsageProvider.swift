@@ -47,6 +47,7 @@ actor CodexAppServerUsageProvider: CodexUsageProviding {
             // 只有当 secondary 存在时，primary 才可能是独立的 5h 窗口
             primary: limits.secondary != nil ? limits.primary?.usageWindow : nil,
             secondary: weekly.usageWindow,
+            credits: limits.credits,
             fetchedAt: fetchedAt
         )
     }
@@ -86,6 +87,62 @@ struct CodexRateLimitsResponse: Decodable, Sendable {
 struct CodexRateLimitSnapshot: Decodable, Sendable {
     let primary: CodexRateLimitWindow?
     let secondary: CodexRateLimitWindow?
+    let credits: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case primary
+        case secondary
+        case credits
+        case remainingCredits = "remaining_credits"
+        case creditBalance = "credit_balance"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        primary = try container.decodeIfPresent(CodexRateLimitWindow.self, forKey: .primary)
+        secondary = try container.decodeIfPresent(CodexRateLimitWindow.self, forKey: .secondary)
+
+        if let creditsObj = try? container.decodeIfPresent(CodexRateLimitCredits.self, forKey: .credits) {
+            credits = creditsObj.balance
+        } else if let doubleVal = try? container.decodeIfPresent(Double.self, forKey: .credits) {
+            credits = doubleVal
+        } else if let stringVal = try? container.decodeIfPresent(String.self, forKey: .credits) {
+            credits = Double(stringVal)
+        } else if let doubleVal = (try? container.decodeIfPresent(Double.self, forKey: .remainingCredits))
+            ?? (try? container.decodeIfPresent(Double.self, forKey: .creditBalance)) {
+            credits = doubleVal
+        } else if let stringVal = (try? container.decodeIfPresent(String.self, forKey: .remainingCredits))
+            ?? (try? container.decodeIfPresent(String.self, forKey: .creditBalance)) {
+            credits = Double(stringVal)
+        } else {
+            credits = nil
+        }
+    }
+}
+
+struct CodexRateLimitCredits: Decodable, Sendable {
+    let hasCredits: Bool?
+    let unlimited: Bool?
+    let balance: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case hasCredits
+        case unlimited
+        case balance
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        hasCredits = try container.decodeIfPresent(Bool.self, forKey: .hasCredits)
+        unlimited = try container.decodeIfPresent(Bool.self, forKey: .unlimited)
+        if let doubleVal = try? container.decodeIfPresent(Double.self, forKey: .balance) {
+            balance = doubleVal
+        } else if let stringVal = try? container.decodeIfPresent(String.self, forKey: .balance) {
+            balance = Double(stringVal)
+        } else {
+            balance = nil
+        }
+    }
 }
 
 struct CodexRateLimitWindow: Decodable, Sendable {

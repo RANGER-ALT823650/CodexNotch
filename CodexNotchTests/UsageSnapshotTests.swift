@@ -12,5 +12,15 @@ final class UsageSnapshotTests: XCTestCase {
         XCTAssertEqual(UsageWindow(usedPercent: 0, durationMinutes: 300, resetsAt: nil).title, "5 小时")
         XCTAssertEqual(UsageWindow(usedPercent: 0, durationMinutes: 10_080, resetsAt: nil).title, "一周")
     }
+
+    func testCreditsDefaultsAndCustomValue() {
+        let weekly = UsageWindow(usedPercent: 10, durationMinutes: 10_080, resetsAt: nil)
+        let defaultSnapshot = UsageSnapshot(primary: nil, secondary: weekly, fetchedAt: Date())
+        XCTAssertNil(defaultSnapshot.credits)
+
+        let customSnapshot = UsageSnapshot(primary: nil, secondary: weekly, credits: 1288.78, fetchedAt: Date())
+        XCTAssertEqual(customSnapshot.credits, 1288.78)
+    }
 }
+
 
