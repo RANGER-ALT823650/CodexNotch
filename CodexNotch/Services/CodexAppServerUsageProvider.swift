@@ -52,13 +52,21 @@ actor CodexAppServerUsageProvider: CodexUsageProviding {
         )
     }
 
-    private static func resolveCodexExecutable() -> String? {
+    static func resolveCodexExecutable() -> String? {
         let environment = ProcessInfo.processInfo.environment
         let candidates = [
             environment["CODEX_PATH"],
             "/opt/homebrew/bin/codex",
             "/usr/local/bin/codex",
             environment["HOME"].map { "\($0)/.local/bin/codex" },
+            "/Applications/ChatGPT.app/Contents/Resources/codex",
+            "/Applications/ChatGPT.app/Contents/MacOS/codex",
+            "/Applications/Codex.app/Contents/Resources/codex",
+            "/Applications/Codex.app/Contents/MacOS/codex",
+            environment["HOME"].map { "\($0)/Applications/ChatGPT.app/Contents/Resources/codex" },
+            environment["HOME"].map { "\($0)/Applications/ChatGPT.app/Contents/MacOS/codex" },
+            environment["HOME"].map { "\($0)/Applications/Codex.app/Contents/Resources/codex" },
+            environment["HOME"].map { "\($0)/Applications/Codex.app/Contents/MacOS/codex" },
         ].compactMap { $0 }
 
         return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }

@@ -15,7 +15,7 @@ enum CodexUsageError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .codexNotInstalled:
-            "未找到 Codex CLI，请先安装并登录 Codex。"
+            "未找到 Codex CLI 或 Codex App，请先安装并登录 Codex。"
         case let .processStartFailed(message):
             "Codex 进程启动失败：\(message)"
         case let .requestFailed(message):

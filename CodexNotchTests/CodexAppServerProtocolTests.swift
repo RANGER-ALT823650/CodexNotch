@@ -42,4 +42,9 @@ final class CodexAppServerProtocolTests: XCTestCase {
 
         XCTAssertEqual(snapshot.credits, 1288.779503)
     }
+
+    func testResolvesExecutableFromSystemOrAppBundle() throws {
+        let executable = CodexAppServerUsageProvider.resolveCodexExecutable()
+        XCTAssertNotNil(executable, "Codex executable should be found on system or inside ChatGPT/Codex App bundle")
+    }
 }
