@@ -36,6 +36,8 @@ enum NotchInteractionGeometry {
 @MainActor
 final class NotchController {
     private let codexStore: UsageStore
+    private let claudeStore: ClaudeUsageStore
+    private let cursorStore: CursorUsageStore
     private let antigravityStore: AntigravityUsageStore
     private let agentUsageStore: AgentUsageStore
     private var outsideLocalMonitor: Any?
@@ -51,11 +53,13 @@ final class NotchController {
     private lazy var notch = DynamicNotch(
         hoverBehavior: .all,
         style: .auto,
-        expanded: { [weak self, codexStore, antigravityStore, agentUsageStore] in
+        expanded: { [weak self, codexStore, claudeStore, cursorStore, antigravityStore, agentUsageStore] in
             let safeAreaTop = self?.targetScreen.safeAreaInsets.top ?? 0
             let cardSize = UsageCardView.contentSize(for: self?.targetScreen)
             UsageCardView(
                 codexStore: codexStore,
+                claudeStore: claudeStore,
+                cursorStore: cursorStore,
                 antigravityStore: antigravityStore,
                 agentUsageStore: agentUsageStore,
                 safeAreaTop: safeAreaTop,
@@ -70,7 +74,6 @@ final class NotchController {
                 self?.compact()
             }
         },
-        // NOTE: Codex 已取消 5 小时限额，左侧改为显示 provider 信息，不再显示 5h。
         compactLeading: {
             UsageCompactView(
                 kind: .primary
@@ -85,10 +88,14 @@ final class NotchController {
 
     init(
         codexStore: UsageStore,
+        claudeStore: ClaudeUsageStore,
+        cursorStore: CursorUsageStore,
         antigravityStore: AntigravityUsageStore,
         agentUsageStore: AgentUsageStore
     ) {
         self.codexStore = codexStore
+        self.claudeStore = claudeStore
+        self.cursorStore = cursorStore
         self.antigravityStore = antigravityStore
         self.agentUsageStore = agentUsageStore
         startForegroundObserver()
@@ -221,7 +228,9 @@ final class NotchController {
         let lowerAppName = appName.lowercased()
         let lowerBundleID = bundleID.lowercased()
 
-        if lowerAppName.contains("codex") || lowerBundleID.contains("codex") || lowerAppName.contains("antigravity") || lowerBundleID.contains("antigravity") {
+        if lowerAppName.contains("codex") || lowerBundleID.contains("codex")
+            || lowerAppName.contains("antigravity") || lowerBundleID.contains("antigravity")
+            || lowerAppName.contains("claude") || lowerBundleID.contains("claude") {
             return true
         }
 
@@ -248,7 +257,7 @@ final class NotchController {
                     if AXUIElementCopyAttributeValue(windowRef, kAXTitleAttribute as CFString, &title) == .success,
                        let titleString = title as? String {
                         let lowerTitle = titleString.lowercased()
-                        if lowerTitle.contains("agy") || lowerTitle.contains("codex") || lowerTitle.contains("antigravity") {
+                        if lowerTitle.contains("agy") || lowerTitle.contains("codex") || lowerTitle.contains("antigravity") || lowerTitle.contains("claude") {
                             return true
                         }
                     }
@@ -262,7 +271,7 @@ final class NotchController {
                           windowOwnerPID == frontmost.processIdentifier,
                           let windowName = info[kCGWindowName as String] as? String else { continue }
                     let lowerTitle = windowName.lowercased()
-                    if lowerTitle.contains("agy") || lowerTitle.contains("codex") || lowerTitle.contains("antigravity") {
+                    if lowerTitle.contains("agy") || lowerTitle.contains("codex") || lowerTitle.contains("antigravity") || lowerTitle.contains("claude") {
                         return true
                     }
                 }

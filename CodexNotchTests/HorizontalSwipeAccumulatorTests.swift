@@ -31,12 +31,16 @@ final class HorizontalSwipeAccumulatorTests: XCTestCase {
     }
 
     func testProviderCycleIncludesAllAgentsInBothDirections() {
-        XCTAssertEqual(UsageCardView.provider(after: .codex, direction: .left), .antigravity)
+        XCTAssertEqual(UsageCardView.provider(after: .codex, direction: .left), .claude)
+        XCTAssertEqual(UsageCardView.provider(after: .claude, direction: .left), .cursor)
+        XCTAssertEqual(UsageCardView.provider(after: .cursor, direction: .left), .antigravity)
         XCTAssertEqual(UsageCardView.provider(after: .antigravity, direction: .left), .allAgents)
         XCTAssertEqual(UsageCardView.provider(after: .allAgents, direction: .left), .codex)
 
         XCTAssertEqual(UsageCardView.provider(after: .codex, direction: .right), .allAgents)
         XCTAssertEqual(UsageCardView.provider(after: .allAgents, direction: .right), .antigravity)
-        XCTAssertEqual(UsageCardView.provider(after: .antigravity, direction: .right), .codex)
+        XCTAssertEqual(UsageCardView.provider(after: .antigravity, direction: .right), .cursor)
+        XCTAssertEqual(UsageCardView.provider(after: .cursor, direction: .right), .claude)
+        XCTAssertEqual(UsageCardView.provider(after: .claude, direction: .right), .codex)
     }
 }

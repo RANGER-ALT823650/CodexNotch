@@ -17,6 +17,14 @@ struct UsageCompactView: View {
         AppRuntime.shared.usageStore
     }
 
+    private var claudeStore: ClaudeUsageStore {
+        AppRuntime.shared.claudeStore
+    }
+
+    private var cursorStore: CursorUsageStore {
+        AppRuntime.shared.cursorStore
+    }
+
     private var antigravityStore: AntigravityUsageStore {
         AppRuntime.shared.antigravityStore
     }
@@ -55,6 +63,8 @@ struct UsageCompactView: View {
     private var isRefreshing: Bool {
         switch activeProvider {
         case .codex: codexStore.isRefreshing
+        case .claude: claudeStore.isRefreshing
+        case .cursor: cursorStore.isRefreshing
         case .antigravity: antigravityStore.isRefreshing
         case .allAgents: agentUsageStore.isRefreshing
         }
@@ -77,10 +87,8 @@ struct UsageCompactView: View {
         if activeProvider == .allAgents {
             return kind == .primary ? "Tokens" : "Days"
         }
-        // NOTE: Codex 已取消 5 小时限额，左侧改为 "Codex"；Antigravity 保留 "5h"。
-        // return kind == .primary ? "5h" : "7d"
-        if activeProvider == .codex {
-            return kind == .primary ? "Codex" : "7d"
+        if activeProvider == .cursor {
+            return kind == .primary ? "Grok" : "其他"
         }
         return kind == .primary ? "5h" : "7d"
     }
@@ -88,14 +96,26 @@ struct UsageCompactView: View {
     private var remainingPercent: Double? {
         switch activeProvider {
         case .codex:
-            // NOTE: Codex 已取消 5 小时限额，只返回 secondary（一周）。
-            // switch kind {
-            // case .primary:
-            //     return codexStore.snapshot?.primary.remainingPercent
-            // case .secondary:
-            //     return codexStore.snapshot?.secondary.remainingPercent
-            // }
-            return codexStore.snapshot?.secondary.remainingPercent
+            switch kind {
+            case .primary:
+                return codexStore.snapshot?.primary?.remainingPercent
+            case .secondary:
+                return codexStore.snapshot?.secondary.remainingPercent
+            }
+        case .claude:
+            switch kind {
+            case .primary:
+                return claudeStore.snapshot?.primary?.remainingPercent
+            case .secondary:
+                return claudeStore.snapshot?.secondary.remainingPercent
+            }
+        case .cursor:
+            switch kind {
+            case .primary:
+                return cursorStore.snapshot?.grokWindow.remainingPercent
+            case .secondary:
+                return cursorStore.snapshot?.otherWindow.remainingPercent
+            }
         case .antigravity:
             // Antigravity 仍保留 5 小时限额，正常区分 primary/secondary。
             guard let group = antigravityStore.snapshot?.mostRecentlyUsedGroup else { return nil }

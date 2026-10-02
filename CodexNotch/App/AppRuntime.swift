@@ -4,6 +4,8 @@ import ServiceManagement
 
 enum UsageProvider: String, CaseIterable, Identifiable, Sendable {
     case codex = "Codex"
+    case claude = "Claude"
+    case cursor = "Cursor"
     case antigravity = "Antigravity"
     case allAgents = "所有智能体"
 
@@ -16,6 +18,8 @@ final class AppRuntime {
     static let shared = AppRuntime()
 
     let usageStore: UsageStore
+    let claudeStore: ClaudeUsageStore
+    let cursorStore: CursorUsageStore
     let antigravityStore: AntigravityUsageStore
     let agentUsageStore: AgentUsageStore
     var activeProvider: UsageProvider = .codex
@@ -32,6 +36,8 @@ final class AppRuntime {
 
     private init() {
         usageStore = UsageStore(provider: CodexAppServerUsageProvider())
+        claudeStore = ClaudeUsageStore(provider: ClaudeUsageProvider())
+        cursorStore = CursorUsageStore(provider: CursorUsageProvider())
         antigravityStore = AntigravityUsageStore(provider: AntigravityLocalUsageProvider())
         agentUsageStore = AgentUsageStore(provider: AgentTokenTrackerUsageProvider())
     }
@@ -41,18 +47,24 @@ final class AppRuntime {
         NSApp.setActivationPolicy(.accessory)
         let controller = NotchController(
             codexStore: usageStore,
+            claudeStore: claudeStore,
+            cursorStore: cursorStore,
             antigravityStore: antigravityStore,
             agentUsageStore: agentUsageStore
         )
         notchController = controller
         controller.showCompact()
         usageStore.startAutomaticRefresh()
+        claudeStore.startAutomaticRefresh()
+        cursorStore.startAutomaticRefresh()
         antigravityStore.startAutomaticRefresh()
     }
 
     func stop() {
         ManagedCLIProcessRegistry.shared.terminate()
         usageStore.stopAutomaticRefresh()
+        claudeStore.stopAutomaticRefresh()
+        cursorStore.stopAutomaticRefresh()
         antigravityStore.stop()
         notchController?.stop()
         notchController = nil

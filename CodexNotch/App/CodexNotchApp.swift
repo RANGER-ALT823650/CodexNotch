@@ -30,9 +30,26 @@ private struct MenuBarContent: View {
 
     var body: some View {
         if let snapshot = runtime.usageStore.snapshot {
-            // NOTE: Codex 已取消 5 小时限额，注释掉 primary 的显示。
-            // Text("5 小时剩余 \(Int(snapshot.primary.remainingPercent.rounded()))%")
+            if let primary = snapshot.primary {
+                Text("5 小时剩余 \(Int(primary.remainingPercent.rounded()))%")
+            }
             Text("一周剩余 \(Int(snapshot.secondary.remainingPercent.rounded()))%")
+            Divider()
+        }
+
+        if let snapshot = runtime.claudeStore.snapshot {
+            Text("Claude Code（\(snapshot.billingType == "apple_subscription" ? "Apple 订阅 Pro" : "Pro")）")
+            if let primary = snapshot.primary {
+                Text("5 小时剩余 \(Int(primary.remainingPercent.rounded()))%")
+            }
+            Text("一周剩余 \(Int(snapshot.secondary.remainingPercent.rounded()))%")
+            Divider()
+        }
+
+        if let snapshot = runtime.cursorStore.snapshot {
+            Text("Cursor（\(snapshot.planName)）")
+            Text("Grok 剩余 \(Int(snapshot.grokWindow.remainingPercent.rounded()))%")
+            Text("其他模型剩余 \(Int(snapshot.otherWindow.remainingPercent.rounded()))%")
             Divider()
         }
 
@@ -56,16 +73,22 @@ private struct MenuBarContent: View {
             runtime.showCard()
         }
 
-        Button(runtime.usageStore.isRefreshing ? "正在刷新…" : "刷新") {
+        Button(
+            runtime.usageStore.isRefreshing || runtime.claudeStore.isRefreshing || runtime.cursorStore.isRefreshing ? "正在刷新…" : "刷新"
+        ) {
             Task {
                 async let codex: Void = runtime.usageStore.refresh()
+                async let claude: Void = runtime.claudeStore.refresh()
+                async let cursor: Void = runtime.cursorStore.refresh()
                 async let antigravity: Void = runtime.antigravityStore.refresh()
                 async let agents: Void = runtime.agentUsageStore.refresh()
-                _ = await (codex, antigravity, agents)
+                _ = await (codex, claude, cursor, antigravity, agents)
             }
         }
         .disabled(
             runtime.usageStore.isRefreshing
+                || runtime.claudeStore.isRefreshing
+                || runtime.cursorStore.isRefreshing
                 || runtime.antigravityStore.isRefreshing
                 || runtime.agentUsageStore.isRefreshing
         )
@@ -84,13 +107,15 @@ private struct MenuBarContent: View {
             set: { enabled in runtime.setLaunchAtLogin(enabled) }
         ))
 
-        Toggle("仅在 agy/codex/antigravity 窗口前台时显示", isOn: Binding(
+        Toggle("仅在 agy/codex/claude/cursor/antigravity 窗口前台时显示", isOn: Binding(
             get: { runtime.onlyShowOnForeground },
             set: { runtime.onlyShowOnForeground = $0 }
         ))
 
         if let error = runtime.usageStore.errorMessage
             ?? runtime.usageStore.resetNotificationError
+            ?? runtime.claudeStore.errorMessage
+            ?? runtime.cursorStore.errorMessage
             ?? runtime.antigravityStore.errorMessage
             ?? runtime.agentUsageStore.errorMessage
             ?? runtime.launchAtLoginError

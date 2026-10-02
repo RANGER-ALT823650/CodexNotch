@@ -14,6 +14,8 @@ struct UsageCardView: View {
     }
 
     let codexStore: UsageStore
+    let claudeStore: ClaudeUsageStore
+    let cursorStore: CursorUsageStore
     let antigravityStore: AntigravityUsageStore
     let agentUsageStore: AgentUsageStore
     let safeAreaTop: CGFloat
@@ -30,6 +32,8 @@ struct UsageCardView: View {
 
     init(
         codexStore: UsageStore,
+        claudeStore: ClaudeUsageStore,
+        cursorStore: CursorUsageStore,
         antigravityStore: AntigravityUsageStore,
         agentUsageStore: AgentUsageStore,
         safeAreaTop: CGFloat,
@@ -39,6 +43,8 @@ struct UsageCardView: View {
         onCollapse: @escaping () -> Void
     ) {
         self.codexStore = codexStore
+        self.claudeStore = claudeStore
+        self.cursorStore = cursorStore
         self.antigravityStore = antigravityStore
         self.agentUsageStore = agentUsageStore
         self.safeAreaTop = safeAreaTop
@@ -59,6 +65,10 @@ struct UsageCardView: View {
                         switch provider {
                         case .codex:
                             codexContent
+                        case .claude:
+                            ClaudeUsageView(store: claudeStore, scale: scale)
+                        case .cursor:
+                            CursorUsageView(store: cursorStore, scale: scale)
                         case .antigravity:
                             AntigravityUsageView(store: antigravityStore, scale: scale)
                         case .allAgents:
@@ -135,6 +145,12 @@ struct UsageCardView: View {
         .accessibilityAction(named: "显示 Codex 用量") {
             select(.codex, direction: .right)
         }
+        .accessibilityAction(named: "显示 Claude Code 用量") {
+            select(.claude, direction: .left)
+        }
+        .accessibilityAction(named: "显示 Cursor 用量") {
+            select(.cursor, direction: .left)
+        }
         .accessibilityAction(named: "显示 Antigravity 用量") {
             select(.antigravity, direction: .left)
         }
@@ -177,12 +193,19 @@ struct UsageCardView: View {
                 let totalWidth = max(proxy.size.width - (horizontalPadding * 2), 0)
                 let hasCredits = snapshot.credits != nil
                 let availableWidth = max(totalWidth - (hasCredits ? spacing : 0), 0)
-                let leftWidth = availableWidth * (hasCredits ? 0.72 : 1.0)
                 let rightWidth = availableWidth * (hasCredits ? 0.28 : 0.0)
 
-                HStack(spacing: hasCredits ? spacing : 0) {
+                HStack(spacing: spacing) {
+                    if let primary = snapshot.primary {
+                        UsageProgressView(window: primary, scale: scale)
+                            .frame(maxWidth: .infinity)
+
+                        Divider()
+                            .overlay(.white.opacity(0.12))
+                    }
+
                     UsageProgressView(window: snapshot.secondary, scale: scale)
-                        .frame(width: leftWidth)
+                        .frame(maxWidth: .infinity)
 
                     if let credits = snapshot.credits {
                         Divider()
@@ -215,6 +238,8 @@ struct UsageCardView: View {
     private var isRefreshing: Bool {
         switch provider {
         case .codex: codexStore.isRefreshing
+        case .claude: claudeStore.isRefreshing
+        case .cursor: cursorStore.isRefreshing
         case .antigravity: antigravityStore.isRefreshing
         case .allAgents: agentUsageStore.isRefreshing
         }
@@ -223,6 +248,8 @@ struct UsageCardView: View {
     private var currentError: String? {
         switch provider {
         case .codex: codexStore.errorMessage
+        case .claude: claudeStore.errorMessage
+        case .cursor: cursorStore.errorMessage
         case .antigravity: antigravityStore.errorMessage
         case .allAgents: agentUsageStore.errorMessage
         }
@@ -231,6 +258,8 @@ struct UsageCardView: View {
     private var currentUpdateDate: Date? {
         switch provider {
         case .codex: codexStore.snapshot?.fetchedAt
+        case .claude: claudeStore.snapshot?.fetchedAt
+        case .cursor: cursorStore.snapshot?.fetchedAt
         case .antigravity: antigravityStore.snapshot?.fetchedAt
         case .allAgents: agentUsageStore.snapshot?.fetchedAt
         }
@@ -239,6 +268,8 @@ struct UsageCardView: View {
     private var providerIcon: String {
         switch provider {
         case .codex: "terminal.fill"
+        case .claude: "asterisk"
+        case .cursor: "cursorarrow.rays"
         case .antigravity: "sparkles"
         case .allAgents: "square.grid.3x3.square.fill"
         }
@@ -247,6 +278,8 @@ struct UsageCardView: View {
     private var providerColor: Color {
         switch provider {
         case .codex: .green
+        case .claude: Color(red: 0.85, green: 0.47, blue: 0.34)
+        case .cursor: Color(red: 0.45, green: 0.67, blue: 1)
         case .antigravity: .mint
         case .allAgents: Color(red: 0.34, green: 0.82, blue: 0.43)
         }
@@ -255,6 +288,8 @@ struct UsageCardView: View {
     private var providerTitle: String {
         switch provider {
         case .codex: "Codex 用量"
+        case .claude: "Claude Code 用量"
+        case .cursor: "Cursor 用量"
         case .antigravity: "Antigravity 用量"
         case .allAgents: "所有智能体 Token"
         }
@@ -320,6 +355,8 @@ struct UsageCardView: View {
         Task {
             switch target {
             case .codex: await codexStore.refresh()
+            case .claude: await claudeStore.refresh()
+            case .cursor: await cursorStore.refresh()
             case .antigravity: await antigravityStore.refresh()
             case .allAgents: await agentUsageStore.refresh()
             }
