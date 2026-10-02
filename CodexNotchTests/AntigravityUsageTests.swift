@@ -74,5 +74,66 @@ final class AntigravityUsageTests: XCTestCase {
 
         XCTAssertEqual(AntigravityLocalUsageProvider.parseListeningPorts(output), [42100, 42101])
     }
-}
 
+    func testCLIProcessTokenIsSentToQuotaEndpoint() throws {
+        let processes = try AntigravityLocalUsageProvider.parseProcesses("""
+          202 /Users/test/.local/bin/agy --csrf_token test-session-token
+          203 agy --csrf_token=another-session-token
+          204 agy
+        """)
+
+        XCTAssertEqual(processes.map(\.csrfToken), ["test-session-token", "another-session-token", ""])
+        for process in processes {
+            let request = try AntigravityLocalUsageProvider.quotaRequest(endpoint: .init(
+                scheme: "https", port: 42100, csrfToken: process.csrfToken, source: .cli
+            ))
+            XCTAssertEqual(request.url?.host, "127.0.0.1")
+            XCTAssertEqual(request.httpMethod, "POST")
+            XCTAssertEqual(
+                request.value(forHTTPHeaderField: "X-Codeium-Csrf-Token"),
+                process.csrfToken.isEmpty ? nil : process.csrfToken
+            )
+        }
+    }
+
+    func testDesktopQuotaRequestStillSendsCSRFToken() throws {
+        let request = try AntigravityLocalUsageProvider.quotaRequest(endpoint: .init(
+            scheme: "https", port: 42100, csrfToken: "desktop-session-token", source: .app
+        ))
+        XCTAssertEqual(request.value(forHTTPHeaderField: "X-Codeium-Csrf-Token"), "desktop-session-token")
+    }
+
+    func testCSRFResponseIsNotOverwrittenByOtherPortTLSFailure() {
+        let response = Data(#"{"code":"unauthenticated","message":"missing CSRF token"}"#.utf8)
+        let apiError = AntigravityLocalUsageProvider.responseError(statusCode: 401, data: response)
+        XCTAssertEqual(apiError, .csrfRejected)
+
+        let tlsError = URLError(.secureConnectionFailed)
+        let selected = AntigravityLocalUsageProvider.preferredError(tlsError, over: apiError)
+        XCTAssertEqual(selected as? AntigravityUsageError, .csrfRejected)
+        let laterProcessError = AntigravityLocalUsageProvider.preferredError(
+            AntigravityUsageError.noListeningPort, over: selected
+        )
+        XCTAssertEqual(laterProcessError as? AntigravityUsageError, .csrfRejected)
+    }
+
+    func testNotLoggedInReturnsAuthenticationRequired() {
+        let response = Data(#"{"code":"internal","message":"internal: failed to get load code assist response: error getting token source: You are not logged into Antigravity."}"#.utf8)
+        let error = AntigravityLocalUsageProvider.responseError(statusCode: 500, data: response)
+        XCTAssertEqual(error, .authenticationRequired)
+    }
+
+    func testAuthenticationRequiredIsNotOverwrittenByCSRFRejected() {
+        let authError = AntigravityUsageError.authenticationRequired
+        let csrfError = AntigravityUsageError.csrfRejected
+        let selected = AntigravityLocalUsageProvider.preferredError(csrfError, over: authError)
+        XCTAssertEqual(selected as? AntigravityUsageError, .authenticationRequired)
+    }
+
+    func testAPIErrorsAreNotOverwrittenByCSRFRejected() {
+        let apiError = AntigravityUsageError.api("HTTP 500")
+        let csrfError = AntigravityUsageError.csrfRejected
+        let selected = AntigravityLocalUsageProvider.preferredError(csrfError, over: apiError)
+        XCTAssertEqual(selected as? AntigravityUsageError, .api("HTTP 500"))
+    }
+}

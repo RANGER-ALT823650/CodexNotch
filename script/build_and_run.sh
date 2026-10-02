@@ -10,6 +10,10 @@ DERIVED_DATA="$ROOT_DIR/.build/RunDerivedData"
 APP_BUNDLE="$DERIVED_DATA/Build/Products/Debug/$APP_NAME.app"
 APP_BINARY="$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
+if [ -d "/Applications/Xcode-beta.app/Contents/Developer" ] && ! xcode-select -p 2>/dev/null | grep -q Xcode; then
+  export DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer"
+fi
+
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 
 xcodebuild build \

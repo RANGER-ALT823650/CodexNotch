@@ -13,7 +13,6 @@ final class CodexAppServerProtocolTests: XCTestCase {
             fetchedAt: Date(timeIntervalSince1970: 100)
         )
 
-        // NOTE: primary 现在是可选的（Codex 已取消 5 小时限额），但 API 若仍返回则照常解析。
         XCTAssertEqual(snapshot.primary?.remainingPercent, 76)
         XCTAssertEqual(snapshot.primary?.durationMinutes, 300)
         XCTAssertEqual(snapshot.secondary.remainingPercent, 23)
@@ -41,6 +40,19 @@ final class CodexAppServerProtocolTests: XCTestCase {
         let snapshot = try CodexAppServerUsageProvider.makeSnapshot(from: response, fetchedAt: .now)
 
         XCTAssertEqual(snapshot.credits, 1288.779503)
+    }
+
+    func testIgnoresCreditsWhenHasCreditsIsFalse() throws {
+        let data = Data(
+            #"{"rateLimits":{"limitId":"codex","primary":{"usedPercent":0,"windowDurationMins":300,"resetsAt":1787718978},"secondary":{"usedPercent":0,"windowDurationMins":10080,"resetsAt":1788305778},"credits":{"hasCredits":false,"unlimited":false,"balance":"0"}},"rateLimitsByLimitId":null}"#.utf8
+        )
+
+        let response = try CodexAppServerUsageProvider.decodeRateLimitsResult(from: data)
+        let snapshot = try CodexAppServerUsageProvider.makeSnapshot(from: response, fetchedAt: .now)
+
+        XCTAssertNil(snapshot.credits)
+        XCTAssertEqual(snapshot.primary?.remainingPercent, 100)
+        XCTAssertEqual(snapshot.secondary.remainingPercent, 100)
     }
 
     func testResolvesExecutableFromSystemOrAppBundle() throws {

@@ -36,9 +36,6 @@ actor CodexAppServerUsageProvider: CodexUsageProviding {
         fetchedAt: Date
     ) throws -> UsageSnapshot {
         let limits = response.rateLimitsByLimitId?["codex"] ?? response.rateLimits
-        // NOTE: Codex 已取消 5 小时限额。API 可能只返回 primary（周限额被提升为
-        // 唯一窗口），也可能仍返回 secondary。优先使用 secondary，降级到 primary。
-        // guard let primary = limits.primary, let secondary = limits.secondary else {
         guard let weekly = limits.secondary ?? limits.primary else {
             throw CodexUsageError.missingRateLimits
         }
@@ -111,7 +108,7 @@ struct CodexRateLimitSnapshot: Decodable, Sendable {
         secondary = try container.decodeIfPresent(CodexRateLimitWindow.self, forKey: .secondary)
 
         if let creditsObj = try? container.decodeIfPresent(CodexRateLimitCredits.self, forKey: .credits) {
-            credits = creditsObj.balance
+            credits = (creditsObj.hasCredits == false) ? nil : creditsObj.balance
         } else if let doubleVal = try? container.decodeIfPresent(Double.self, forKey: .credits) {
             credits = doubleVal
         } else if let stringVal = try? container.decodeIfPresent(String.self, forKey: .credits) {
@@ -201,7 +198,7 @@ private final class CodexRPCClient: @unchecked Sendable {
         stdoutContinuation = stream.continuation
 
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = [executable, "-s", "read-only", "-a", "untrusted", "app-server", "--stdio"]
+        process.arguments = [executable, "-s", "read-only", "-a", "on-request", "app-server", "--stdio"]
         process.environment = ProcessInfo.processInfo.environment
         process.standardInput = stdinPipe
         process.standardOutput = stdoutPipe

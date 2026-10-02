@@ -8,6 +8,7 @@ import Darwin
 enum AntigravityUsageError: LocalizedError, Equatable {
     case notRunning
     case missingCSRFToken
+    case csrfRejected
     case binaryNotFound
     case noListeningPort
     case authenticationRequired
@@ -20,6 +21,8 @@ enum AntigravityUsageError: LocalizedError, Equatable {
             "未检测到 Antigravity 或 agy"
         case .missingCSRFToken:
             "Antigravity 本地会话缺少 CSRF token，请重启 Antigravity"
+        case .csrfRejected:
+            "Antigravity 本地接口认证失败：CSRF token 缺失或已失效"
         case .binaryNotFound:
             "未找到 agy；请安装 Antigravity CLI，或先启动 Antigravity 应用"
         case .noListeningPort:
@@ -43,13 +46,11 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
         let csrfToken: String
     }
 
-    private struct Endpoint: Sendable {
+    struct Endpoint: Sendable {
         let scheme: String
         let port: Int
         let csrfToken: String
         let source: AntigravityUsageSnapshot.Source
-
-        var requiresCSRFToken: Bool { source == .app }
     }
 
     private static let quotaPath =
@@ -59,6 +60,7 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
     private var cliInputPipe: Pipe?
     private var cliOutputPipe: Pipe?
     private var cliOutput = LockedDataBuffer()
+    private var managedCSRFToken: String?
 
     func fetchUsage() async throws -> AntigravityUsageSnapshot {
         var lastError: Error?
@@ -68,20 +70,26 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
             do {
                 return try await fetch(from: current)
             } catch {
-                lastError = error
+                try Task.checkCancellation()
+                lastError = Self.preferredError(error, over: lastError)
+                // If we have a managed CLI process and current processes failed to return quota,
+                // terminate the stale managed CLI so a fresh one can be spawned.
+                if managedCSRFToken != nil {
+                    await stopCLI()
+                }
             }
         }
 
         guard let agyPath = Self.resolveAgyBinary() else {
             throw lastError ?? AntigravityUsageError.binaryNotFound
         }
-        try startCLIIfNeeded(binary: agyPath)
+        try await startCLIIfNeeded(binary: agyPath)
 
         let deadline = Date().addingTimeInterval(6)
         while Date() < deadline {
             try Task.checkCancellation()
             if cliOutput.containsAuthenticationPrompt {
-                stopCLI()
+                await stopCLI()
                 throw AntigravityUsageError.authenticationRequired
             }
 
@@ -90,26 +98,45 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
                 do {
                     return try await fetch(from: processes)
                 } catch {
-                    lastError = error
+                    try Task.checkCancellation()
+                    lastError = Self.preferredError(error, over: lastError)
                 }
             }
             try await Task.sleep(for: .milliseconds(250))
         }
 
         if cliOutput.containsAuthenticationPrompt {
-            stopCLI()
+            await stopCLI()
             throw AntigravityUsageError.authenticationRequired
         }
+        // If deadline exceeded without success, clean up managed CLI rather than leaving a zombie.
+        await stopCLI()
         throw lastError ?? AntigravityUsageError.noListeningPort
     }
 
     func shutdown() async {
-        stopCLI()
+        await stopCLI()
     }
 
     private func fetch(from processes: [ProcessInfo]) async throws -> AntigravityUsageSnapshot {
         var lastError: Error?
-        for process in processes.sorted(by: { processRank($0.kind) < processRank($1.kind) }) {
+        // Reuse authenticated instances before probing legacy, tokenless ones.
+        // If an authenticated candidate exists (Desktop app or CLI with token),
+        // skip tokenless CLI processes to avoid spurious 401 CSRF failures.
+        let hasAuthenticatedCandidate = processes.contains { !$0.csrfToken.isEmpty }
+        let candidates = hasAuthenticatedCandidate
+            ? processes.filter { !$0.csrfToken.isEmpty || $0.kind != .cli }
+            : processes
+
+        let sorted = candidates.sorted {
+            let lhs = processRank($0.kind)
+            let rhs = processRank($1.kind)
+            if lhs != rhs { return lhs < rhs }
+            if $0.csrfToken.isEmpty != $1.csrfToken.isEmpty { return !$0.csrfToken.isEmpty }
+            return $0.pid < $1.pid
+        }
+        for process in sorted {
+            try Task.checkCancellation()
             do {
                 let ports = try await Self.listeningPorts(pid: process.pid)
                 let source: AntigravityUsageSnapshot.Source = process.kind == .cli ? .cli : .app
@@ -121,11 +148,13 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
                         let data = try await Self.requestQuota(endpoint: endpoint)
                         return try AntigravityQuotaParser.parse(data, source: source)
                     } catch {
-                        lastError = error
+                        try Task.checkCancellation()
+                        lastError = Self.preferredError(error, over: lastError)
                     }
                 }
             } catch {
-                lastError = error
+                try Task.checkCancellation()
+                lastError = Self.preferredError(error, over: lastError)
             }
         }
         throw lastError ?? AntigravityUsageError.noListeningPort
@@ -139,10 +168,26 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
         }
     }
 
-    private func startCLIIfNeeded(binary: String) throws {
-        if cliProcess?.isRunning == true { return }
-        stopCLI()
+    // A real API response is more useful than TLS errors from other listening ports.
+    static func preferredError(_ error: Error, over previous: Error?) -> Error {
+        func rank(_ error: Error) -> Int {
+            guard let usageError = error as? AntigravityUsageError else { return 1 }
+            switch usageError {
+            case .noListeningPort, .notRunning, .binaryNotFound: return 0
+            case .csrfRejected, .missingCSRFToken: return 2
+            case .authenticationRequired: return 3
+            case .api, .parse: return 4
+            }
+        }
+        guard let previous, rank(previous) > rank(error) else { return error }
+        return previous
+    }
 
+    private func startCLIIfNeeded(binary: String) async throws {
+        if cliProcess?.isRunning == true { return }
+        await stopCLI()
+
+        let token = UUID().uuidString
         let process = Process()
         let input = Pipe()
         let output = Pipe()
@@ -152,7 +197,9 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
         }
 
         process.executableURL = URL(fileURLWithPath: "/usr/bin/script")
-        process.arguments = ["-q", "/dev/null", binary]
+        // Newer agy versions require CSRF even for their localhost CLI API.
+        // Set a fresh per-process token rather than reading account credentials.
+        process.arguments = ["-q", "/dev/null", binary, "--csrf_token", token]
         process.standardInput = input
         process.standardOutput = output
         process.standardError = output
@@ -172,11 +219,24 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
         cliInputPipe = input
         cliOutputPipe = output
         cliOutput = buffer
+        managedCSRFToken = token
         ManagedCLIProcessRegistry.shared.register(pid: process.processIdentifier)
     }
 
-    private func stopCLI() {
+    private func stopCLI() async {
         cliOutputPipe?.fileHandleForReading.readabilityHandler = nil
+        if let token = managedCSRFToken {
+            if let output = try? await Self.runCommand("/bin/ps", arguments: ["-ax", "-o", "pid=,command="]) {
+                for line in output.split(separator: "\n") {
+                    if line.contains(token) {
+                        let parts = line.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: " ", maxSplits: 1)
+                        if let pidStr = parts.first, let pid = pid_t(pidStr) {
+                            Darwin.kill(pid, SIGTERM)
+                        }
+                    }
+                }
+            }
+        }
         if let process = cliProcess {
             ManagedCLIProcessRegistry.shared.clear(pid: process.processIdentifier)
             if process.isRunning {
@@ -189,6 +249,7 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
         cliInputPipe = nil
         cliOutputPipe = nil
         cliOutput = LockedDataBuffer()
+        managedCSRFToken = nil
     }
 
     static func parseProcesses(_ output: String) throws -> [ProcessInfo] {
@@ -203,7 +264,8 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
             guard let kind = processKind(command) else { continue }
 
             if kind == .cli {
-                matches.append(ProcessInfo(pid: pid, kind: kind, csrfToken: ""))
+                let token = extractFlag("--csrf_token", from: command) ?? ""
+                matches.append(ProcessInfo(pid: pid, kind: kind, csrfToken: token))
             } else if let token = extractFlag("--csrf_token", from: command) {
                 matches.append(ProcessInfo(pid: pid, kind: kind, csrfToken: token))
             } else {
@@ -292,7 +354,7 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
         return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
-    private static func requestQuota(endpoint: Endpoint) async throws -> Data {
+    static func quotaRequest(endpoint: Endpoint) throws -> URLRequest {
         guard let url = URL(string: "\(endpoint.scheme)://127.0.0.1:\(endpoint.port)\(quotaPath)") else {
             throw AntigravityUsageError.api("无效的本地接口地址")
         }
@@ -304,9 +366,34 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(String(body.count), forHTTPHeaderField: "Content-Length")
         request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
-        if endpoint.requiresCSRFToken {
+        if !endpoint.csrfToken.isEmpty {
             request.setValue(endpoint.csrfToken, forHTTPHeaderField: "X-Codeium-Csrf-Token")
         }
+        return request
+    }
+
+    static func responseError(statusCode: Int, data: Data) -> AntigravityUsageError {
+        let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let message = payload?["message"] as? String
+
+        if statusCode == 401 || statusCode == 403 {
+            if let message, message.lowercased().contains("csrf") {
+                return .csrfRejected
+            }
+            if let message, message.lowercased().contains("not logged into antigravity") || message.lowercased().contains("login") {
+                return .authenticationRequired
+            }
+        }
+        if statusCode == 500,
+           let message,
+           message.lowercased().contains("not logged into antigravity") {
+            return .authenticationRequired
+        }
+        return .api("HTTP \(statusCode)")
+    }
+
+    private static func requestQuota(endpoint: Endpoint) async throws -> Data {
+        let request = try quotaRequest(endpoint: endpoint)
 
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 2
@@ -321,7 +408,7 @@ actor AntigravityLocalUsageProvider: AntigravityUsageProviding {
             throw AntigravityUsageError.api("本地接口没有返回 HTTP 响应")
         }
         guard response.statusCode == 200 else {
-            throw AntigravityUsageError.api("HTTP \(response.statusCode)")
+            throw responseError(statusCode: response.statusCode, data: data)
         }
         return data
     }
