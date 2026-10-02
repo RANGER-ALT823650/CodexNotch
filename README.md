@@ -12,7 +12,7 @@
 - **点击展开卡片** — 点击刘海或两侧用量数字，展开详细用量卡片（显示 5 小时和周限额进度环）
 - **双指滑动切换** — 在 Codex、Claude Code、Cursor、Antigravity 和所有智能体 Token 热力图之间无缝切换
 - **Claude Code 独立卡片** — 展示 5 小时滚动窗口与 1 周配额（支持 Apple 订阅 / 官方 Pro $20/月套餐），右侧面板清晰展示用量细分（Claude Code vs Chats）及重置倒计时
-- **Cursor 独立卡片** — 读取本机已登录的 Cursor 账号，按设置页的两个额度池展示 Grok（Cursor 模型）和其他模型的剩余百分比，并附上已含金额与按需金额
+- **Cursor 独立卡片** — 读取本机已登录的 Cursor 账号，按设置页的两个额度池展示 Grok（Cursor 模型）和其他模型的剩余百分比，右侧展示 Grok Bot 的每周用量；收起时左侧跟随 Cursor 最近一个对话的模型显示 Grok 或其他模型额度，右侧固定显示 Bot 额度
 - **365 天活动热力图** — 以 GitHub 贡献图的方式展示本机所有支持智能体的 Token 用量
 - **每日 Token 详情** — 点击热力图方块，在展开页下方查看当天日期与总用量（例如 `22.1M`）
 - **颜色提醒** — 绿色充足、橙色警告、红色不足，一目了然
@@ -108,7 +108,7 @@ open "$HOME/Applications/CodexNotch.app"
 ## ⚙️ 技术原理
 
 - **Codex 用量** — 通过本地启动 `codex app-server --stdio` 进程，使用 JSON-RPC 调用 `account/rateLimits/read` 获取
-- **Cursor 用量** — 只读本机 Cursor 登录状态，调用 Cursor 账单接口读取当前周期的套餐额度与按需用量。登录过期时会用本机 refresh token 换新的访问令牌，不会改写 Cursor 的数据库
+- **Cursor 用量** — 只读本机 Cursor 登录状态，调用 Cursor 账单接口读取当前周期的套餐额度，并另读 Grok Bot 的每周用量。登录过期时会用本机 refresh token 换新的访问令牌，不会改写 Cursor 的数据库
 - **Antigravity 用量** — 优先探测已运行的 Antigravity 应用的本地 HTTPS 接口；如果应用未运行，自动启动 `agy` CLI 获取
 - **所有智能体 Token** — 调用固定版本的 TokenTracker 执行一次 `sync --auto`，然后原生读取 `~/.tokentracker/tracker/queue.jsonl`
 - **内存策略** — 仅在切换到热力图或手动刷新时采集；不启动 TokenTracker Dashboard、菜单栏 App、WKWebView 或常驻服务

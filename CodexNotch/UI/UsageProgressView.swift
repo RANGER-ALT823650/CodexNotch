@@ -9,6 +9,8 @@ struct UsageProgressView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(window.title)
                     .font(.system(size: 13 * scale, weight: .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Spacer()
                 Text("\(Int(window.remainingPercent.rounded()))%")
                     .font(.system(size: 19 * scale, weight: .bold, design: .rounded))
@@ -49,7 +51,12 @@ struct UsageProgressView: View {
     }
 
     private var resetDescription: String {
-        guard let resetsAt = window.resetsAt else { return "重置时间未知" }
-        return "\(resetsAt.formatted(.relative(presentation: .named)))重置"
+        if let resetsAt = window.resetsAt {
+            return "\(resetsAt.formatted(.relative(presentation: .named)))重置"
+        }
+        if window.durationMinutes == 10_080 {
+            return "每周重置"
+        }
+        return "重置时间未知"
     }
 }

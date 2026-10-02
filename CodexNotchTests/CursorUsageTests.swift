@@ -89,6 +89,7 @@ final class CursorUsageTests: XCTestCase {
         XCTAssertEqual(snapshot.onDemandSpendCents, 250)
         XCTAssertEqual(snapshot.onDemandLimitCents, 10000)
         XCTAssertEqual(snapshot.billingCycleEnd?.timeIntervalSince1970 ?? 0, 1_771_077_734, accuracy: 0.001)
+        XCTAssertNil(snapshot.grokBotWindow)
         XCTAssertEqual(CursorUsageSnapshot.dollars(23222), "$232.22")
         XCTAssertEqual(CursorUsageSnapshot.dollars(40000), "$400")
     }
@@ -114,5 +115,54 @@ final class CursorUsageTests: XCTestCase {
         XCTAssertEqual(snapshot.grokWindow.remainingPercent, 100)
         XCTAssertEqual(snapshot.otherWindow.remainingPercent, 100)
         XCTAssertNil(snapshot.priceLabel)
+        XCTAssertNil(snapshot.grokBotWindow)
+    }
+
+    func testGrokBotWindowUsesWeeklyReset() throws {
+        let usage = """
+        {
+          "planUsage": { "includedSpend": 0, "limit": 2000 }
+        }
+        """
+        let sand = """
+        {
+          "usagePercent": 18.5,
+          "hasNonZeroIncludedLimit": true,
+          "nextResetTimestampUtc": "2026-10-09T07:00:00Z"
+        }
+        """
+        let snapshot = try CursorUsageProvider.makeSnapshot(
+            usageData: Data(usage.utf8),
+            planData: nil,
+            sandData: Data(sand.utf8),
+            credentials: CursorCredentials(accessToken: "token", membershipType: "pro")
+        )
+        let window = try XCTUnwrap(snapshot.grokBotWindow)
+        XCTAssertEqual(window.title, "Grok Bot")
+        XCTAssertEqual(window.usedPercent, 18.5, accuracy: 0.001)
+        XCTAssertEqual(window.remainingPercent, 81.5, accuracy: 0.001)
+        XCTAssertEqual(window.durationMinutes, 10_080)
+        XCTAssertEqual(window.resetsAt?.timeIntervalSince1970 ?? 0, 1_791_529_200, accuracy: 0.001)
+    }
+
+    func testGrokBotWindowHiddenWithoutIncludedAllowance() {
+        let sand = Data(#"{"usagePercent":0,"hasNonZeroIncludedLimit":false}"#.utf8)
+        XCTAssertNil(CursorUsageProvider.grokBotWindow(from: sand))
+    }
+
+    func testRecentModelWindowFollowsModelPool() throws {
+        let usage = #"{"planUsage":{"autoPercentUsed":10,"apiPercentUsed":40}}"#
+        let snapshot = try CursorUsageProvider.makeSnapshot(
+            usageData: Data(usage.utf8),
+            planData: nil,
+            credentials: CursorCredentials(accessToken: "token")
+        )
+        XCTAssertEqual(snapshot.recentModelWindow(modelName: "grok-4.7").title, "Grok")
+        XCTAssertEqual(snapshot.recentModelWindow(modelName: "composer-2").title, "Grok")
+        XCTAssertEqual(snapshot.recentModelWindow(modelName: "default").title, "Grok")
+        XCTAssertEqual(snapshot.recentModelWindow(modelName: nil).title, "Grok")
+        let other = snapshot.recentModelWindow(modelName: "claude-opus-5-5")
+        XCTAssertEqual(other.title, "其他")
+        XCTAssertEqual(other.remainingPercent, 60, accuracy: 0.001)
     }
 }

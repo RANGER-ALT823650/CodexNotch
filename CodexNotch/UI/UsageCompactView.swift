@@ -88,7 +88,8 @@ struct UsageCompactView: View {
             return kind == .primary ? "Tokens" : "Days"
         }
         if activeProvider == .cursor {
-            return kind == .primary ? "Grok" : "其他"
+            guard kind == .primary else { return "Bot" }
+            return cursorStore.recentModelWindow?.title ?? "Grok"
         }
         return kind == .primary ? "5h" : "7d"
     }
@@ -112,9 +113,9 @@ struct UsageCompactView: View {
         case .cursor:
             switch kind {
             case .primary:
-                return cursorStore.snapshot?.grokWindow.remainingPercent
+                return cursorStore.recentModelWindow?.remainingPercent
             case .secondary:
-                return cursorStore.snapshot?.otherWindow.remainingPercent
+                return cursorStore.snapshot?.grokBotWindow?.remainingPercent
             }
         case .antigravity:
             // Antigravity 仍保留 5 小时限额，正常区分 primary/secondary。

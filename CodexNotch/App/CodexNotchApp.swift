@@ -50,6 +50,9 @@ private struct MenuBarContent: View {
             Text("Cursor（\(snapshot.planName)）")
             Text("Grok 剩余 \(Int(snapshot.grokWindow.remainingPercent.rounded()))%")
             Text("其他模型剩余 \(Int(snapshot.otherWindow.remainingPercent.rounded()))%")
+            if let bot = snapshot.grokBotWindow {
+                Text("Grok Bot 剩余 \(Int(bot.remainingPercent.rounded()))%")
+            }
             Divider()
         }
 

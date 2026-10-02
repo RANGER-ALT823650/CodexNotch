@@ -13,6 +13,8 @@ struct CursorUsageSnapshot: Equatable, Sendable {
     let onDemandSpendCents: Int
     let onDemandLimitCents: Int?
     let billingCycleEnd: Date?
+    /// Grok Bot 的每周额度。没有包含额度、或接口没返回可用百分比时为空。
+    let grokBotWindow: UsageWindow?
     let fetchedAt: Date
 
     /// Cursor 设置里的 Cursor Models 池：Grok 与 Composer。
@@ -33,6 +35,14 @@ struct CursorUsageSnapshot: Equatable, Sendable {
             resetsAt: billingCycleEnd,
             label: "其他"
         )
+    }
+
+    /// 最近对话所用模型对应的额度池；读不到模型时默认 Grok。
+    func recentModelWindow(modelName: String?) -> UsageWindow {
+        guard let modelName, !CursorUsageProvider.usesCursorModelPool(modelName) else {
+            return grokWindow
+        }
+        return otherWindow
     }
 
     var planUsedPercent: Double {

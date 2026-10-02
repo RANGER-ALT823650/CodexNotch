@@ -3,6 +3,7 @@ import Foundation
 actor CursorUsageProvider: CursorUsageProviding {
     private static let usageURL = "https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage"
     private static let planURL = "https://api2.cursor.sh/aiserver.v1.DashboardService/GetPlanInfo"
+    private static let sandURL = "https://api2.cursor.sh/aiserver.v1.DashboardService/GetSandUsageStatus"
     private static let refreshURL = "https://api2.cursor.sh/oauth/token"
     private static let clientID = "KbZUR41cY7W6zRSdpSUJ7I7mLYBKOCmB"
 
@@ -78,9 +79,11 @@ actor CursorUsageProvider: CursorUsageProviding {
     private func requestUsage(credentials: CursorCredentials) async throws -> CursorUsageSnapshot {
         let usageData = try await post(urlString: Self.usageURL, token: credentials.accessToken, body: [:])
         let planData = try? await post(urlString: Self.planURL, token: credentials.accessToken, body: [:])
+        let sandData = try? await post(urlString: Self.sandURL, token: credentials.accessToken, body: [:])
         return try Self.makeSnapshot(
             usageData: usageData,
             planData: planData,
+            sandData: sandData,
             credentials: credentials,
             fetchedAt: now()
         )
@@ -146,9 +149,43 @@ actor CursorUsageProvider: CursorUsageProviding {
         return Date(timeIntervalSince1970: exp)
     }
 
-    static func readLocalAuth() async throws -> CursorCredentials {
-        let database = FileManager.default.homeDirectoryForCurrentUser
+    func fetchRecentChatModel() async -> String? {
+        await Self.readRecentChatModel()
+    }
+
+    private static var stateDatabase: URL {
+        FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/Cursor/User/globalStorage/state.vscdb")
+    }
+
+    /// 跳过子智能体对话和还没发过消息的空白新对话，它们不代表用户实际在用的模型。
+    static func readRecentChatModel() async -> String? {
+        let database = stateDatabase
+        guard FileManager.default.fileExists(atPath: database.path) else { return nil }
+        let query = """
+        SELECT json_extract(value, '$.modelConfig.modelName') FROM cursorDiskKV
+        WHERE key LIKE 'composerData:%'
+          AND json_extract(value, '$.subagentInfo') IS NULL
+          AND json_array_length(json_extract(value, '$.fullConversationHeadersOnly')) > 0
+          AND json_extract(value, '$.modelConfig.modelName') IS NOT NULL
+        ORDER BY coalesce(json_extract(value, '$.lastUpdatedAt'), json_extract(value, '$.createdAt')) DESC
+        LIMIT 1;
+        """
+        guard let output = try? await runCommand("/usr/bin/sqlite3", ["-readonly", database.path, query]) else {
+            return nil
+        }
+        let model = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        return model.isEmpty ? nil : model
+    }
+
+    /// Grok、Composer 和 Auto 计入 Cursor Models 池，其余模型计入 Other Models 池。
+    static func usesCursorModelPool(_ modelName: String) -> Bool {
+        let name = modelName.lowercased()
+        return name.hasPrefix("grok") || name.hasPrefix("composer") || name == "auto" || name == "default"
+    }
+
+    static func readLocalAuth() async throws -> CursorCredentials {
+        let database = stateDatabase
         guard FileManager.default.fileExists(atPath: database.path) else {
             throw CursorUsageError.tokenNotFound
         }
@@ -201,6 +238,7 @@ actor CursorUsageProvider: CursorUsageProviding {
     static func makeSnapshot(
         usageData: Data,
         planData: Data?,
+        sandData: Data? = nil,
         credentials: CursorCredentials,
         fetchedAt: Date = Date()
     ) throws -> CursorUsageSnapshot {
@@ -235,7 +273,27 @@ actor CursorUsageProvider: CursorUsageProviding {
             onDemandSpendCents: onDemandSpend,
             onDemandLimitCents: onDemandLimit,
             billingCycleEnd: cycleEnd,
+            grokBotWindow: grokBotWindow(from: sandData),
             fetchedAt: fetchedAt
+        )
+    }
+
+    /// Grok Bot（接口里的 Sand）和 Cursor 模型额度分开，按周重置。
+    /// 没有个人包含额度时不展示，避免把 0% 误当成「还没用」。
+    static func grokBotWindow(from data: Data?) -> UsageWindow? {
+        guard let data, let usage = try? jsonObject(data) else { return nil }
+        guard (usage["usesPooledEnterpriseAllowance"] as? Bool) != true,
+              (usage["hasNonZeroIncludedLimit"] as? Bool) != false,
+              (usage["includedLimitZero"] as? Bool) != true,
+              let percent = optionalNumber(usage["usagePercent"]),
+              percent >= 0
+        else { return nil }
+
+        return UsageWindow(
+            usedPercent: min(percent, 100),
+            durationMinutes: 10_080,
+            resetsAt: resetDate(usage["nextResetTimestampUtc"]),
+            label: "Grok Bot"
         )
     }
 
@@ -272,6 +330,21 @@ actor CursorUsageProvider: CursorUsageProviding {
         }
     }
 
+    private static func optionalNumber(_ value: Any?) -> Double? {
+        switch value {
+        case let number as Double:
+            return number
+        case let number as Int:
+            return Double(number)
+        case let number as NSNumber:
+            return number.doubleValue
+        case let text as String:
+            return Double(text)
+        default:
+            return nil
+        }
+    }
+
     private static func number(_ value: Any?) -> Double {
         switch value {
         case let number as Double:
@@ -291,6 +364,23 @@ actor CursorUsageProvider: CursorUsageProviding {
         let millis = number(value)
         guard millis > 0 else { return nil }
         return Date(timeIntervalSince1970: millis / 1000)
+    }
+
+    /// Sand 接口的重置时间可能是 ISO-8601，也可能是毫秒或秒时间戳。
+    private static func resetDate(_ value: Any?) -> Date? {
+        if let text = value as? String {
+            let fractional = ISO8601DateFormatter()
+            fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = fractional.date(from: text) { return date }
+            let plain = ISO8601DateFormatter()
+            plain.formatOptions = [.withInternetDateTime]
+            if let date = plain.date(from: text) { return date }
+        }
+        guard let raw = optionalNumber(value), raw > 0 else { return nil }
+        if raw >= 1_000_000_000_000 {
+            return Date(timeIntervalSince1970: raw / 1000)
+        }
+        return Date(timeIntervalSince1970: raw)
     }
 
     private static func runCommand(_ executable: String, _ arguments: [String]) async throws -> String {

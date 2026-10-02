@@ -2,6 +2,8 @@ import Foundation
 
 protocol CursorUsageProviding: Sendable {
     func fetchUsage() async throws -> CursorUsageSnapshot
+    /// 本机 Cursor 最近一个对话所用的模型 ID，读不到时为空。
+    func fetchRecentChatModel() async -> String?
 }
 
 struct CursorCredentials: Equatable, Sendable {
